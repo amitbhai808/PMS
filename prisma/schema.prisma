@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// SQLite stores these values as text. Validate them with the Zod enums in lib/domain.ts.
+model User {
+  id             String     @id @default(cuid())
+  email          String     @unique
+  name           String
+  phone          String?    @unique
+  passwordHash   String
+  role           String     @default("MEMBER")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  wallet         Wallet?
+  sessions       Session[]
+  vehicles       Vehicle[]
+  bookings       Booking[]
+  dedicatedSlots Slot[]     @relation("VIPSlotOwner")
+  auditLogs      AuditLog[]
+}
+
+model Session {
+  id        String    @id
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+model Wallet {
+  id           String              @id @default(cuid())
+  balancePaise Int                 @default(0)
+  currency     String              @default("INR")
+  userId       String              @unique
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedAt    DateTime            @updatedAt
+  transactions WalletTransaction[]
+}
+
+model WalletTransaction {
+  id          String   @id @default(cuid())
+  walletId    String
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  amountPaise Int
+  type        String
+  reference   String?  @unique
+  description String
+  createdAt   DateTime @default(now())
+
+  @@index([walletId, createdAt])
+}
+
+model Vehicle {
+  licensePlate String    @id
+  type         String
+  ownerId      String?
+  owner        User?     @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  createdAt    DateTime  @default(now())
+  bookings     Booking[]
+
+  @@index([ownerId])
+}
+
+model Zone {
+  id              String   @id @default(cuid())
+  name            String
+  level           Int
+  isCovered       Boolean  @default(true)
+  clearanceHeight Float?
+  createdAt       DateTime @default(now())
+  slots           Slot[]
+
+  @@unique([name, level])
+}
+
+model Slot {
+  id                 String    @id @default(cuid())
+  code               String    @unique
+  zoneId             String
+  zone               Zone      @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  slotType           String    @default("REGULAR")
+  allowedVehicleType String    @default("ANY")
+  distanceToGate     Int
+  isShadowPool       Boolean   @default(false)
+  status             String    @default("AVAILABLE")
+  dedicatedUserId    String?
+  dedicatedUser      User?     @relation("VIPSlotOwner", fields: [dedicatedUserId], references: [id], onDelete: SetNull)
+  bookings           Booking[]
+
+  @@index([zoneId, status, isShadowPool])
+  @@index([dedicatedUserId])
+}
+
+model Booking {
+  id              String    @id @default(cuid())
+  status          String    @default("PENDING")
+  userId          String?
+  user            User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  licensePlate    String
+  vehicle         Vehicle   @relation(fields: [licensePlate], references: [licensePlate])
+  slotId          String
+  slot            Slot      @relation(fields: [slotId], references: [id])
+  expectedEntry   DateTime
+  expectedExit    DateTime
+  actualEntry     DateTime?
+  actualExit      DateTime?
+  hourlyRatePaise Int
+  baseFeePaise    Int       @default(0)
+  penaltyFeePaise Int       @default(0)
+  totalPaidPaise  Int       @default(0)
+  paymentStatus   String    @default("UNPAID")
+  idempotencyKey  String?   @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  reassignmentEvents ReassignmentEvent[]
+
+  @@index([expectedEntry, expectedExit])
+  @@index([slotId, status, expectedEntry, expectedExit])
+  @@index([licensePlate, status])
+  @@index([userId, status])
+}
+
+model ReassignmentEvent {
+  id           String   @id @default(cuid())
+  bookingId    String
+  booking      Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  fromSlotCode String
+  toSlotCode   String
+  reason       String
+  createdAt    DateTime @default(now())
+
+  @@index([bookingId, createdAt])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  actor       User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  event       String
+  entityType  String
+  entityId    String
+  details     String?
+  createdAt   DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
+  @@index([actorUserId, createdAt])
+}
+
+// First write inside allocation transactions serializes SQLite writers before slot selection.
+model AllocationLock {
+  id      String @id
+  version Int    @default(0)
+}

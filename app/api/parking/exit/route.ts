@@ -29,11 +29,12 @@ export async function POST(request: NextRequest) {
         return { error: "Only the booking owner or an operator can complete this exit", status: 403 as const };
       }
 
+      const isStaff = principal?.role === "OPERATOR" || principal?.role === "SUPERADMIN";
       const fees = feeForVisit(booking.actualEntry ?? booking.expectedEntry, now, booking.expectedExit, booking.hourlyRatePaise);
       const paymentMethod = input.data.paymentMethod
-        ?? (booking.userId && principal?.id === booking.userId ? "WALLET" : "UPI");
-      if (paymentMethod === "WALLET" && (!booking.userId || principal?.id !== booking.userId)) {
-        return { error: "Wallet payment is available to the signed-in booking owner", status: 403 as const };
+        ?? (booking.userId && (principal?.id === booking.userId || isStaff) ? "WALLET" : "UPI");
+      if (paymentMethod === "WALLET" && (!booking.userId || (principal?.id !== booking.userId && !isStaff))) {
+        return { error: "Wallet payment is available to the signed-in booking owner or gate operator", status: 403 as const };
       }
 
       if (paymentMethod === "WALLET") {

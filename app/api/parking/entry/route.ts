@@ -15,10 +15,11 @@ import { serverEnv } from "@/lib/env";
 
 export async function POST(request: NextRequest) {
   const principal = await getPrincipal(request);
-  if (serverEnv().NODE_ENV === "production" && !principal && !isValidGateKey(request.headers.get("x-anpr-gate-secret"))) {
+  const gateSecretValid = isValidGateKey(request.headers.get("x-anpr-gate-secret"));
+  if (serverEnv().NODE_ENV === "production" && !principal && !gateSecretValid) {
     return apiError("A signed-in account or valid ANPR service key is required", 401);
   }
-  return handleEntry(request, principal);
+  return handleEntry(request, principal, gateSecretValid);
 }
 
 function isValidGateKey(value: string | null) {
@@ -37,6 +38,7 @@ export async function handleEntry(
   const input = await readJson(request, EntryRequestSchema);
   if ("response" in input) return input.response;
   const principal = sessionPrincipal === undefined ? await getPrincipal(request) : sessionPrincipal;
+  const isStaff = principal?.role === "OPERATOR" || principal?.role === "SUPERADMIN";
   const now = new Date();
   const expectedExit = input.data.expectedExit ?? new Date(now.getTime() + (input.data.durationMinutes ?? 60) * 60_000);
   if (expectedExit <= now) return apiError("expectedExit must be in the future", 422);
@@ -44,32 +46,6 @@ export async function handleEntry(
   try {
     const result = await withAllocationLock(async (tx) => {
       const existingVehicle = await tx.vehicle.findUnique({ where: { licensePlate: input.data.licensePlate } });
-      const bookingUserId = principal?.id ?? (trustedGate ? existingVehicle?.ownerId ?? undefined : undefined);
-      if (existingVehicle?.ownerId && existingVehicle.ownerId !== bookingUserId) {
-        return { error: "This registered vehicle can only enter from its owner's account or the trusted ANPR gate", status: 403 as const };
-      }
-
-      if (input.data.idempotencyKey) {
-        const previous = await tx.booking.findUnique({ where: { idempotencyKey: input.data.idempotencyKey }, include: { slot: { include: { zone: true } } } });
-        if (previous) {
-          if (previous.licensePlate !== input.data.licensePlate || previous.userId !== (bookingUserId ?? null)) {
-            return { error: "Idempotency key has already been used", status: 409 as const };
-          }
-          return { booking: previous, duplicate: true, reassigned: false };
-        }
-      }
-
-      const vehicleType = (existingVehicle?.type ?? input.data.vehicleType) as VehicleType | undefined;
-      if (!vehicleType) return { error: "vehicleType is required for an unregistered vehicle", status: 422 as const };
-      if (existingVehicle && input.data.vehicleType && existingVehicle.type !== input.data.vehicleType) {
-        return { error: "Vehicle type does not match the registered vehicle", status: 422 as const };
-      }
-
-      await tx.vehicle.upsert({
-        where: { licensePlate: input.data.licensePlate },
-        create: { licensePlate: input.data.licensePlate, type: vehicleType, ownerId: bookingUserId },
-        update: principal && !existingVehicle?.ownerId ? { ownerId: principal.id } : {},
-      });
 
       const reservation = input.data.reservationId
         ? await tx.booking.findFirst({ where: { id: input.data.reservationId, status: "PENDING" }, include: { slot: true } })
@@ -87,9 +63,49 @@ export async function handleEntry(
       if (input.data.reservationId && !reservation) {
         return { error: "Pending reservation not found", status: 404 as const };
       }
-      if (reservation && (reservation.licensePlate !== input.data.licensePlate || (reservation.userId && reservation.userId !== bookingUserId))) {
-        return { error: "Reservation does not belong to this vehicle or account", status: 403 as const };
+      if (reservation) {
+        if (reservation.licensePlate !== input.data.licensePlate) {
+          return { error: "Reservation does not belong to this vehicle", status: 403 as const };
+        }
+        if (reservation.userId && !isStaff && !trustedGate && reservation.userId !== principal?.id) {
+          return { error: "Reservation does not belong to this account", status: 403 as const };
+        }
       }
+
+      // If registered to a member, operators and trusted gates can admit the car,
+      // but non-staff users cannot check in another member's registered vehicle.
+      if (existingVehicle?.ownerId && !isStaff && !trustedGate && existingVehicle.ownerId !== principal?.id) {
+        return { error: "This registered vehicle can only enter from its owner's account or the trusted ANPR gate", status: 403 as const };
+      }
+
+      const bookingUserId = reservation?.userId
+        ?? existingVehicle?.ownerId
+        ?? (!isStaff && !trustedGate ? principal?.id : undefined);
+
+      if (input.data.idempotencyKey) {
+        const previous = await tx.booking.findUnique({ where: { idempotencyKey: input.data.idempotencyKey }, include: { slot: { include: { zone: true } } } });
+        if (previous) {
+          if (previous.licensePlate !== input.data.licensePlate || previous.userId !== (bookingUserId ?? null)) {
+            return { error: "Idempotency key has already been used", status: 409 as const };
+          }
+          return { booking: previous, duplicate: true, reassigned: false };
+        }
+      }
+
+      const vehicleType = (existingVehicle?.type ?? input.data.vehicleType) as VehicleType | undefined;
+      if (!vehicleType) return { error: "vehicleType is required for an unregistered vehicle", status: 422 as const };
+      if (existingVehicle && input.data.vehicleType && existingVehicle.type !== input.data.vehicleType) {
+        return { error: "Vehicle type does not match the registered vehicle", status: 422 as const };
+      }
+
+      const vehicleOwnerId = existingVehicle?.ownerId
+        ?? (reservation?.userId ?? (!isStaff && !trustedGate ? principal?.id : undefined));
+
+      await tx.vehicle.upsert({
+        where: { licensePlate: input.data.licensePlate },
+        create: { licensePlate: input.data.licensePlate, type: vehicleType, ownerId: vehicleOwnerId },
+        update: !existingVehicle?.ownerId && !isStaff && !trustedGate && principal ? { ownerId: principal.id } : {},
+      });
 
       let selectedSlot = reservation?.slot ?? null;
       let reassigned = false;

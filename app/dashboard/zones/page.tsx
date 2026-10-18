@@ -93,10 +93,10 @@ export default function ZoneManagementPage() {
 
   if (user && user.role !== "SUPERADMIN") {
     return (
-      <div className="dash-empty py-16">
+      <div className="text-center py-16 px-6 text-neutral-400 flex flex-col items-center justify-center">
         <ShieldAlert size={36} className="text-red-500 mb-2" />
-        <h3>Access Restricted</h3>
-        <p>Facility zone configuration is restricted to SuperAdmin accounts.</p>
+        <h3 className="text-sm font-semibold text-neutral-800 mt-2 mb-1">Access Restricted</h3>
+        <p className="text-xs text-neutral-500">Facility zone configuration is restricted to SuperAdmin accounts.</p>
       </div>
     );
   }
@@ -104,16 +104,16 @@ export default function ZoneManagementPage() {
   return (
     <div>
       {/* Header */}
-      <div className="dash-page-header-row mb-6">
-        <div className="dash-page-header !mb-0">
-          <h1>Facility Zones & Levels</h1>
-          <p>Configure parking structure floors, height clearances, and bay distribution</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-neutral-900">Facility Zones & Levels</h1>
+          <p className="text-xs text-neutral-500 mt-1">Configure parking structure floors, height clearances, and bay distribution</p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="dash-form-submit !h-9 !px-3.5 !text-xs"
+            className="inline-flex items-center gap-1.5 h-9 px-3.5 bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
           >
             <Plus size={14} />
             <span>Create New Zone</span>
@@ -122,9 +122,9 @@ export default function ZoneManagementPage() {
           <button
             onClick={loadZones}
             disabled={refreshing}
-            className="dash-filter-tab flex items-center gap-1.5"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-neutral-200 bg-white text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 transition-colors cursor-pointer"
           >
-            <RefreshCw size={13} className={refreshing ? "spin" : ""} />
+            <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
             <span>{refreshing ? "Refreshing…" : "Refresh"}</span>
           </button>
         </div>
@@ -133,21 +133,21 @@ export default function ZoneManagementPage() {
       {/* Zones List Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {loading ? (
-          <div className="col-span-full dash-empty py-12">
-            <Loader2 size={24} className="spin text-neutral-400 mb-2" />
-            <p>Loading zones…</p>
+          <div className="col-span-full text-center py-12 px-6 text-neutral-400 flex flex-col items-center justify-center">
+            <Loader2 size={24} className="animate-spin text-neutral-400 mb-2" />
+            <p className="text-xs text-neutral-500">Loading zones…</p>
           </div>
         ) : zones.length === 0 ? (
-          <div className="col-span-full dash-empty py-12">
+          <div className="col-span-full text-center py-12 px-6 text-neutral-400 flex flex-col items-center justify-center">
             <MapPin size={32} />
-            <h3>No Zones Configured</h3>
-            <p>Create your first facility parking zone using the button above.</p>
+            <h3 className="text-sm font-semibold text-neutral-800 mt-2 mb-1">No Zones Configured</h3>
+            <p className="text-xs text-neutral-500">Create your first facility parking zone using the button above.</p>
           </div>
         ) : (
           zones.map((zone) => (
             <div
               key={zone.id}
-              className="dash-panel flex flex-col justify-between hover:border-emerald-300 transition-colors"
+              className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs flex flex-col justify-between hover:border-emerald-300 transition-colors"
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -198,7 +198,7 @@ export default function ZoneManagementPage() {
             </div>
 
             {modalError && (
-              <div className="login-error !mb-4">{modalError}</div>
+              <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">{modalError}</div>
             )}
 
             <form onSubmit={handleCreateZone} className="space-y-3.5">
@@ -267,16 +267,16 @@ export default function ZoneManagementPage() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="dash-form-reset !h-8 !text-xs !px-3"
+                  className="h-8 px-3 rounded-lg border border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50 transition-colors font-medium text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={modalLoading}
-                  className="dash-form-submit !h-8 !text-xs !px-4"
+                  className="inline-flex items-center justify-center gap-1.5 h-8 px-4 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
                 >
-                  {modalLoading ? <Loader2 size={13} className="spin" /> : <Plus size={13} />}
+                  {modalLoading ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
                   <span>Save Zone</span>
                 </button>
               </div>

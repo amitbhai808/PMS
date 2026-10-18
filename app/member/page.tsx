@@ -91,15 +91,15 @@ export default function MemberDashboardPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {/* Wallet Balance */}
-        <div className="dash-stat-card border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-white">
+        <div className="bg-white border rounded-xl p-4 sm:p-5 shadow-xs flex flex-col justify-between border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-white">
           <div className="flex items-center justify-between">
-            <span className="dash-stat-label">Wallet Balance</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Wallet Balance</span>
             <Wallet size={18} className="text-emerald-700" />
           </div>
-          <div className="dash-stat-value text-emerald-800">
+          <div className="text-2xl font-bold tracking-tight mt-2 text-emerald-800">
             ₹{wallet?.balance.toFixed(2) ?? "0.00"}
           </div>
-          <div className="dash-stat-detail">
+          <div className="text-xs mt-1.5">
             <Link href="/member/wallet" className="text-emerald-700 font-semibold hover:underline">
               Add funds / View history →
             </Link>
@@ -107,13 +107,13 @@ export default function MemberDashboardPage() {
         </div>
 
         {/* Registered Vehicles */}
-        <div className="dash-stat-card">
+        <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="dash-stat-label">Registered Vehicles</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Registered Vehicles</span>
             <Car size={18} className="text-blue-600" />
           </div>
-          <div className="dash-stat-value text-neutral-800">{vehicles.length}</div>
-          <div className="dash-stat-detail">
+          <div className="text-2xl font-bold tracking-tight mt-2 text-neutral-800">{vehicles.length}</div>
+          <div className="text-xs mt-1.5">
             <Link href="/member/vehicles" className="text-blue-700 font-semibold hover:underline">
               Manage vehicle plates →
             </Link>
@@ -121,13 +121,13 @@ export default function MemberDashboardPage() {
         </div>
 
         {/* Active Reservations */}
-        <div className="dash-stat-card">
+        <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="dash-stat-label">Active / Upcoming</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Active / Upcoming</span>
             <CalendarCheck size={18} className="text-purple-600" />
           </div>
-          <div className="dash-stat-value text-neutral-800">{activeOrPending.length}</div>
-          <div className="dash-stat-detail">
+          <div className="text-2xl font-bold tracking-tight mt-2 text-neutral-800">{activeOrPending.length}</div>
+          <div className="text-xs mt-1.5">
             <Link href="/member/reserve" className="text-purple-700 font-semibold hover:underline">
               Book a new reservation →
             </Link>
@@ -187,46 +187,46 @@ export default function MemberDashboardPage() {
       </div>
 
       {/* Active & Upcoming Sessions */}
-      <div className="dash-panel mb-8">
-        <div className="dash-panel-header">
+      <div className="bg-white border border-neutral-200 rounded-xl p-5 mb-8 shadow-xs">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
           <div>
-            <h3 className="dash-panel-title">Active & Upcoming Sessions</h3>
-            <p className="dash-panel-subtitle">Current on-site visits and pre-booked bays</p>
+            <h3 className="text-sm font-bold text-neutral-900">Active & Upcoming Sessions</h3>
+            <p className="text-xs text-neutral-500 mt-0.5">Current on-site visits and pre-booked bays</p>
           </div>
         </div>
 
         {loading ? (
-          <div className="dash-empty py-10">
-            <Loader2 size={24} className="spin text-neutral-400 mb-2" />
-            <p>Loading your sessions…</p>
+          <div className="text-center py-10 px-6 text-neutral-400 flex flex-col items-center justify-center">
+            <Loader2 size={24} className="animate-spin text-neutral-400 mb-2" />
+            <p className="text-xs text-neutral-500">Loading your sessions…</p>
           </div>
         ) : activeOrPending.length === 0 ? (
-          <div className="dash-empty py-10">
+          <div className="text-center py-10 px-6 text-neutral-400 flex flex-col items-center justify-center">
             <CalendarCheck size={32} />
-            <h3>No Active Bookings</h3>
-            <p>You don&apos;t have any vehicles parked or reserved right now.</p>
+            <h3 className="text-sm font-semibold text-neutral-800 mt-2 mb-1">No Active Bookings</h3>
+            <p className="text-xs text-neutral-500">You don&apos;t have any vehicles parked or reserved right now.</p>
           </div>
         ) : (
-          <div className="dash-table-wrapper">
-            <table className="dash-table">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr>
-                  <th>Vehicle Plate</th>
-                  <th>Assigned Bay</th>
-                  <th>Scheduled Window</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Vehicle Plate</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Assigned Bay</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Scheduled Window</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Status</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-neutral-100">
                 {activeOrPending.map((b) => (
-                  <tr key={b.id}>
-                    <td>
+                  <tr key={b.id} className="hover:bg-neutral-50/70 transition-colors">
+                    <td className="p-2.5 sm:px-3 align-middle">
                       <span className="font-mono font-bold text-xs px-2 py-0.5 rounded bg-neutral-100 border border-neutral-300">
                         {b.licensePlate}
                       </span>
                     </td>
-                    <td>
+                    <td className="p-2.5 sm:px-3 align-middle">
                       <span className="font-bold text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
                         {b.slot?.code ?? "Allocated at Gate"}
                       </span>
@@ -234,23 +234,31 @@ export default function MemberDashboardPage() {
                         <div className="text-[11px] text-neutral-500 mt-0.5">{b.slot.zone.name}</div>
                       )}
                     </td>
-                    <td>
+                    <td className="p-2.5 sm:px-3 align-middle">
                       <div className="text-xs">
                         <div>Entry: <strong>{new Date(b.expectedEntry).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</strong></div>
                         <div className="text-neutral-500">Exit: {new Date(b.expectedExit).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</div>
                       </div>
                     </td>
-                    <td>
-                      <span className={`status-badge ${b.status.toLowerCase()}`}>
+                    <td className="p-2.5 sm:px-3 align-middle">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${
+                        b.status === "ACTIVE"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : b.status === "PENDING"
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          : b.status === "COMPLETED"
+                          ? "bg-blue-50 text-blue-700 border-blue-200"
+                          : "bg-neutral-100 text-neutral-600 border-neutral-300"
+                      }`}>
                         {b.status}
                       </span>
                     </td>
-                    <td>
+                    <td className="p-2.5 sm:px-3 align-middle">
                       {b.status === "PENDING" && (
                         <button
                           type="button"
                           onClick={() => handleCancelReservation(b.id)}
-                          className="text-xs text-red-600 hover:text-red-800 font-medium border border-red-200 rounded px-2 py-1 bg-red-50/50"
+                          className="text-xs text-red-600 hover:text-red-800 font-medium border border-red-200 rounded px-2 py-1 bg-red-50/50 cursor-pointer"
                         >
                           Cancel
                         </button>
@@ -269,44 +277,52 @@ export default function MemberDashboardPage() {
 
       {/* Past Completed Visits */}
       {pastBookings.length > 0 && (
-        <div className="dash-panel">
-          <div className="dash-panel-header">
+        <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
             <div>
-              <h3 className="dash-panel-title">Completed Parking History</h3>
-              <p className="dash-panel-subtitle">Past visits and settlements</p>
+              <h3 className="text-sm font-bold text-neutral-900">Completed Parking History</h3>
+              <p className="text-xs text-neutral-500 mt-0.5">Past visits and settlements</p>
             </div>
           </div>
 
-          <div className="dash-table-wrapper">
-            <table className="dash-table">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr>
-                  <th>Vehicle Plate</th>
-                  <th>Bay</th>
-                  <th>Date & Duration</th>
-                  <th>Total Paid</th>
-                  <th>Status</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Vehicle Plate</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Bay</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Date & Duration</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Total Paid</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-neutral-100">
                 {pastBookings.map((b) => (
-                  <tr key={b.id}>
-                    <td>
+                  <tr key={b.id} className="hover:bg-neutral-50/70 transition-colors">
+                    <td className="p-2.5 sm:px-3 align-middle">
                       <span className="font-mono text-xs">{b.licensePlate}</span>
                     </td>
-                    <td>{b.slot?.code ?? "—"}</td>
-                    <td>
+                    <td className="p-2.5 sm:px-3 align-middle">{b.slot?.code ?? "—"}</td>
+                    <td className="p-2.5 sm:px-3 align-middle">
                       <span className="text-xs text-neutral-700">
                         {new Date(b.actualExit ?? b.expectedExit).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
                       </span>
                     </td>
-                    <td>
+                    <td className="p-2.5 sm:px-3 align-middle">
                       <span className="text-xs font-semibold text-neutral-900">
                         {b.totalPaidPaise > 0 ? `₹${(b.totalPaidPaise / 100).toFixed(2)}` : "—"}
                       </span>
                     </td>
-                    <td>
-                      <span className={`status-badge ${b.status.toLowerCase()}`}>
+                    <td className="p-2.5 sm:px-3 align-middle">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${
+                        b.status === "ACTIVE"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : b.status === "PENDING"
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          : b.status === "COMPLETED"
+                          ? "bg-blue-50 text-blue-700 border-blue-200"
+                          : "bg-neutral-100 text-neutral-600 border-neutral-300"
+                      }`}>
                         {b.status}
                       </span>
                     </td>

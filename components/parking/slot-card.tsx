@@ -26,9 +26,19 @@ type SlotCardProps = {
 };
 
 export function SlotCard({ slot, onClick, selected }: SlotCardProps) {
-  const statusClass = slot.isShadowPool
-    ? "shadow"
-    : slot.status.toLowerCase();
+  const getCardStatusStyles = () => {
+    if (slot.isShadowPool) return "border-purple-200 bg-purple-50/50";
+    switch (slot.status) {
+      case "AVAILABLE":
+        return "border-emerald-200 bg-emerald-50/40";
+      case "OCCUPIED":
+        return "border-red-200 bg-red-50/40";
+      case "MAINTENANCE":
+        return "border-amber-200 bg-amber-50/40";
+      default:
+        return "border-neutral-200 bg-white";
+    }
+  };
 
   const getSlotTypeIcon = () => {
     switch (slot.slotType) {
@@ -63,9 +73,9 @@ export function SlotCard({ slot, onClick, selected }: SlotCardProps) {
   return (
     <div
       onClick={() => onClick?.(slot)}
-      className={`slot-card ${statusClass} ${selected ? "ring-2 ring-emerald-600 shadow-md" : ""} ${
-        onClick ? "cursor-pointer hover:border-emerald-600" : ""
-      }`}
+      className={`rounded-lg border p-3 text-center transition-all duration-150 hover:shadow-md select-none ${getCardStatusStyles()} ${
+        selected ? "ring-2 ring-emerald-600 shadow-md" : ""
+      } ${onClick ? "cursor-pointer hover:border-emerald-600" : "cursor-default"}`}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={(e) => {
@@ -76,7 +86,7 @@ export function SlotCard({ slot, onClick, selected }: SlotCardProps) {
       }}
     >
       <div className="flex items-center justify-between mb-1">
-        <span className="slot-code">{slot.code}</span>
+        <span className="text-sm font-bold text-neutral-800 tracking-tight">{slot.code}</span>
         <span className="flex items-center gap-1">
           {getSlotTypeIcon()}
           {slot.isShadowPool && (
@@ -90,8 +100,8 @@ export function SlotCard({ slot, onClick, selected }: SlotCardProps) {
         </span>
       </div>
 
-      <div className="slot-type">{slot.slotType.replace("_", " ")}</div>
-      <div className="slot-vehicle">{formatVehicleType(slot.allowedVehicleType)}</div>
+      <div className="text-[10px] text-neutral-500 uppercase tracking-wider mt-0.5 font-medium">{slot.slotType.replace("_", " ")}</div>
+      <div className="text-[10px] text-neutral-400 mt-px">{formatVehicleType(slot.allowedVehicleType)}</div>
 
       <div className="mt-2 pt-1 border-t border-dashed border-neutral-200 flex items-center justify-between text-[10px]">
         <span className="text-neutral-500">{slot.distanceToGate}m gate</span>

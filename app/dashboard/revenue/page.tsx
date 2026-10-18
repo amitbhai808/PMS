@@ -65,10 +65,10 @@ export default function RevenueDashboardPage() {
 
   if (user && user.role !== "SUPERADMIN") {
     return (
-      <div className="dash-empty py-16">
+      <div className="text-center py-16 px-6 text-neutral-400 flex flex-col items-center justify-center">
         <ShieldCheck size={36} className="text-red-500 mb-2" />
-        <h3>Access Restricted</h3>
-        <p>Revenue and settlement analytics are restricted to SuperAdmin accounts.</p>
+        <h3 className="text-sm font-semibold text-neutral-800 mt-2 mb-1">Access Restricted</h3>
+        <p className="text-xs text-neutral-500">Revenue and settlement analytics are restricted to SuperAdmin accounts.</p>
       </div>
     );
   }
@@ -76,18 +76,18 @@ export default function RevenueDashboardPage() {
   return (
     <div>
       {/* Header */}
-      <div className="dash-page-header-row mb-6">
-        <div className="dash-page-header !mb-0">
-          <h1>Revenue & Yield Analytics</h1>
-          <p>Financial settlements, dynamic pricing yields, and facility occupancy tracking</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-neutral-900">Revenue & Yield Analytics</h1>
+          <p className="text-xs text-neutral-500 mt-1">Financial settlements, dynamic pricing yields, and facility occupancy tracking</p>
         </div>
 
         <button
           onClick={loadRevenue}
           disabled={refreshing}
-          className="dash-filter-tab flex items-center gap-1.5"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-neutral-200 bg-white text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 transition-colors cursor-pointer"
         >
-          <RefreshCw size={13} className={refreshing ? "spin" : ""} />
+          <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
           <span>{refreshing ? "Refreshing…" : "Refresh"}</span>
         </button>
       </div>
@@ -100,52 +100,52 @@ export default function RevenueDashboardPage() {
       )}
 
       {loading ? (
-        <div className="dash-empty py-16">
-          <Loader2 size={24} className="spin text-neutral-400 mb-2" />
-          <p>Compiling revenue metrics…</p>
+        <div className="text-center py-16 px-6 text-neutral-400 flex flex-col items-center justify-center">
+          <Loader2 size={24} className="animate-spin text-neutral-400 mb-2" />
+          <p className="text-xs text-neutral-500">Compiling revenue metrics…</p>
         </div>
       ) : data ? (
         <>
           {/* Main Financial KPI Banner */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {/* Total Revenue */}
-            <div className="dash-stat-card border-purple-200 bg-gradient-to-br from-purple-50/50 to-white">
+            <div className="bg-white border rounded-xl p-4 sm:p-5 shadow-xs flex flex-col justify-between border-purple-200 bg-gradient-to-br from-purple-50/50 to-white">
               <div className="flex items-center justify-between">
-                <span className="dash-stat-label">Total Realized Revenue</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-purple-700">Total Realized Revenue</span>
                 <CircleDollarSign size={20} className="text-purple-600" />
               </div>
-              <div className="dash-stat-value text-purple-800">
+              <div className="text-2xl font-bold tracking-tight mt-2 text-purple-800">
                 ₹{data.liveRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
               </div>
-              <div className="dash-stat-detail text-purple-700/80">
+              <div className="text-xs mt-1.5 text-purple-700/80">
                 Settled across {data.bookings.COMPLETED ?? 0} departures
               </div>
             </div>
 
             {/* Occupancy Rate */}
-            <div className="dash-stat-card border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-white">
+            <div className="bg-white border rounded-xl p-4 sm:p-5 shadow-xs flex flex-col justify-between border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-white">
               <div className="flex items-center justify-between">
-                <span className="dash-stat-label">Facility Occupancy</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Facility Occupancy</span>
                 <Activity size={20} className="text-emerald-600" />
               </div>
-              <div className="dash-stat-value text-emerald-800">
+              <div className="text-2xl font-bold tracking-tight mt-2 text-emerald-800">
                 {data.occupancyPercent}%
               </div>
-              <div className="dash-stat-detail text-emerald-700/80">
+              <div className="text-xs mt-1.5 text-emerald-700/80">
                 {data.occupiedSlots} of {data.totalSlots} general bays currently filled
               </div>
             </div>
 
             {/* Active Yield */}
-            <div className="dash-stat-card border-blue-200 bg-gradient-to-br from-blue-50/50 to-white">
+            <div className="bg-white border rounded-xl p-4 sm:p-5 shadow-xs flex flex-col justify-between border-blue-200 bg-gradient-to-br from-blue-50/50 to-white">
               <div className="flex items-center justify-between">
-                <span className="dash-stat-label">Active Running Sessions</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-blue-700">Active Running Sessions</span>
                 <CarFront size={20} className="text-blue-600" />
               </div>
-              <div className="dash-stat-value text-blue-800">
+              <div className="text-2xl font-bold tracking-tight mt-2 text-blue-800">
                 {data.bookings.ACTIVE ?? 0}
               </div>
-              <div className="dash-stat-detail text-blue-700/80">
+              <div className="text-xs mt-1.5 text-blue-700/80">
                 Accruing real-time parking hourly meters
               </div>
             </div>
@@ -154,11 +154,11 @@ export default function RevenueDashboardPage() {
           {/* Session Breakdown & Capacity Gauges */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {/* Session Volume Breakdown */}
-            <div className="dash-panel">
-              <div className="dash-panel-header">
+            <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
                 <div>
-                  <h3 className="dash-panel-title">Parking Sessions Breakdown</h3>
-                  <p className="dash-panel-subtitle">Total volume across booking lifecycle states</p>
+                  <h3 className="text-sm font-bold text-neutral-900">Parking Sessions Breakdown</h3>
+                  <p className="text-xs text-neutral-500 mt-0.5">Total volume across booking lifecycle states</p>
                 </div>
               </div>
 
@@ -168,25 +168,25 @@ export default function RevenueDashboardPage() {
                     label: "Active Parked Sessions",
                     count: data.bookings.ACTIVE ?? 0,
                     color: "bg-emerald-600",
-                    badge: "active",
+                    badgeStyle: "bg-emerald-50 text-emerald-700 border-emerald-200",
                   },
                   {
                     label: "Settled Departures",
                     count: data.bookings.COMPLETED ?? 0,
                     color: "bg-blue-600",
-                    badge: "completed",
+                    badgeStyle: "bg-blue-50 text-blue-700 border-blue-200",
                   },
                   {
                     label: "Upcoming Reservations",
                     count: data.bookings.PENDING ?? 0,
                     color: "bg-amber-500",
-                    badge: "pending",
+                    badgeStyle: "bg-amber-50 text-amber-700 border-amber-200",
                   },
                   {
                     label: "Cancelled Reservations",
                     count: data.bookings.CANCELLED ?? 0,
                     color: "bg-neutral-400",
-                    badge: "cancelled",
+                    badgeStyle: "bg-neutral-100 text-neutral-600 border-neutral-300",
                   },
                 ].map((item) => (
                   <div
@@ -197,7 +197,7 @@ export default function RevenueDashboardPage() {
                       <span className={`w-2.5 h-2.5 rounded-full ${item.color}`} />
                       <span className="text-xs font-semibold text-neutral-800">{item.label}</span>
                     </div>
-                    <span className={`status-badge ${item.badge} !text-xs`}>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${item.badgeStyle}`}>
                       {item.count} sessions
                     </span>
                   </div>
@@ -206,11 +206,11 @@ export default function RevenueDashboardPage() {
             </div>
 
             {/* Slot Inventory Breakdown */}
-            <div className="dash-panel">
-              <div className="dash-panel-header">
+            <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
                 <div>
-                  <h3 className="dash-panel-title">Facility Bay Capacity Breakdown</h3>
-                  <p className="dash-panel-subtitle">Physical allocation of facility bays</p>
+                  <h3 className="text-sm font-bold text-neutral-900">Facility Bay Capacity Breakdown</h3>
+                  <p className="text-xs text-neutral-500 mt-0.5">Physical allocation of facility bays</p>
                 </div>
               </div>
 

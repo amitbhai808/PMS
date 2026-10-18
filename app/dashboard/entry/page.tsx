@@ -103,14 +103,14 @@ function EntryForm() {
 
   return (
     <div className="max-w-2xl">
-      <div className="dash-page-header">
-        <h1>Gate Arrival & Allocation</h1>
-        <p>Record vehicle arrival at entrance gate and dispense parking bay assignment</p>
+      <div className="mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-neutral-800 tracking-tight m-0">Gate Arrival & Allocation</h1>
+        <p className="text-neutral-500 text-xs sm:text-sm mt-1 mb-0">Record vehicle arrival at entrance gate and dispense parking bay assignment</p>
       </div>
 
       {result ? (
         /* Entry Ticket Confirmation Card */
-        <div className="dash-result-card print:border-none print:shadow-none animate-in fade-in zoom-in-95 duration-200">
+        <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-5 sm:p-6 mt-4 print:border-none print:shadow-none animate-in fade-in zoom-in-95 duration-200">
           <div className="flex items-center justify-between pb-3 border-b border-emerald-200 mb-4">
             <div className="flex items-center gap-2">
               <CheckCircle2 size={24} className="text-emerald-700" />
@@ -156,7 +156,7 @@ function EntryForm() {
             </div>
           )}
 
-          <dl className="dash-result-detail text-sm mb-6">
+          <dl className="grid grid-cols-[140px_1fr] gap-x-3 gap-y-2 text-sm mb-6 [&>dt]:text-neutral-500 [&>dt]:font-medium [&>dd]:text-neutral-800 [&>dd]:font-semibold [&>dd]:m-0">
             <dt>License Plate:</dt>
             <dd className="font-mono text-base">{result.booking.licensePlate}</dd>
 
@@ -174,7 +174,7 @@ function EntryForm() {
             <button
               type="button"
               onClick={handleReset}
-              className="dash-form-submit"
+              className="inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
             >
               Check In Next Vehicle
             </button>
@@ -182,7 +182,7 @@ function EntryForm() {
         </div>
       ) : (
         /* Entry Form */
-        <div className="dash-panel">
+        <div className="bg-white border border-neutral-200 rounded-xl p-5 sm:p-6 shadow-xs">
           {error && (
             <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2">
               <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
@@ -190,7 +190,7 @@ function EntryForm() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="dash-form">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4.5">
             {/* License Plate */}
             <div>
               <label htmlFor="license-plate" className="block text-xs font-semibold text-neutral-700 mb-1.5">
@@ -258,26 +258,33 @@ function EntryForm() {
                   { mins: 240, label: "4 hours" },
                   { mins: 480, label: "8 hours" },
                   { mins: 1440, label: "Full Day" },
-                ].map((p) => (
-                  <button
-                    key={p.mins}
-                    type="button"
-                    onClick={() => {
-                      setDurationType("preset");
-                      setDurationPreset(p.mins);
-                    }}
-                    className={`dash-filter-tab !py-1.5 !px-3 ${
-                      durationType === "preset" && durationPreset === p.mins ? "active" : ""
-                    }`}
-                  >
-                    {p.label}
-                  </button>
-                ))}
+                ].map((p) => {
+                  const active = durationType === "preset" && durationPreset === p.mins;
+                  return (
+                    <button
+                      key={p.mins}
+                      type="button"
+                      onClick={() => {
+                        setDurationType("preset");
+                        setDurationPreset(p.mins);
+                      }}
+                      className={`py-1.5 px-3 border rounded-md text-xs font-medium cursor-pointer transition-colors ${
+                        active
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold"
+                          : "border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50"
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  );
+                })}
                 <button
                   type="button"
                   onClick={() => setDurationType("custom")}
-                  className={`dash-filter-tab !py-1.5 !px-3 ${
-                    durationType === "custom" ? "active" : ""
+                  className={`py-1.5 px-3 border rounded-md text-xs font-medium cursor-pointer transition-colors ${
+                    durationType === "custom"
+                      ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold"
+                      : "border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50"
                   }`}
                 >
                   Custom
@@ -318,19 +325,19 @@ function EntryForm() {
             </div>
 
             {/* Actions */}
-            <div className="dash-form-actions pt-2">
+            <div className="flex items-center gap-2.5 pt-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="dash-form-submit flex-1"
+                className="flex-1 inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
               >
-                {loading ? <Loader2 size={16} className="spin" /> : <DoorOpen size={16} />}
+                {loading ? <Loader2 size={16} className="animate-spin" /> : <DoorOpen size={16} />}
                 <span>{loading ? "Allocating Bay…" : "Assign Bay & Record Entry"}</span>
               </button>
               <button
                 type="button"
                 onClick={handleReset}
-                className="dash-form-reset"
+                className="h-10 px-4 rounded-lg border border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50 transition-colors font-medium text-xs cursor-pointer"
               >
                 Reset
               </button>
@@ -344,7 +351,7 @@ function EntryForm() {
 
 export default function EntryGatePage() {
   return (
-    <Suspense fallback={<div className="dash-loading"><Loader2 size={24} className="spin" /><p>Loading gate form…</p></div>}>
+    <Suspense fallback={<div className="min-h-[300px] flex flex-col items-center justify-center gap-3 text-neutral-400 text-sm"><Loader2 size={24} className="animate-spin text-emerald-700" /><p>Loading gate form…</p></div>}>
       <EntryForm />
     </Suspense>
   );

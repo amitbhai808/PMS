@@ -91,21 +91,21 @@ export default function MemberVehiclesPage() {
 
   return (
     <div className="max-w-4xl">
-      <div className="dash-page-header">
-        <h1>My Registered Vehicles</h1>
-        <p>Register your vehicle license plates to enable fast automated gate entry and bay reservations</p>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold tracking-tight text-neutral-900">My Registered Vehicles</h1>
+        <p className="text-xs text-neutral-500 mt-1">Register your vehicle license plates to enable fast automated gate entry and bay reservations</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Register Vehicle Form */}
-        <div className="dash-panel">
-          <div className="dash-panel-header">
+        <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
             <div>
-              <h3 className="dash-panel-title flex items-center gap-2">
+              <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
                 <Plus size={16} className="text-emerald-700" />
                 Add New Vehicle
               </h3>
-              <p className="dash-panel-subtitle">Link plate to your member profile</p>
+              <p className="text-xs text-neutral-500 mt-0.5">Link plate to your member profile</p>
             </div>
           </div>
 
@@ -116,7 +116,7 @@ export default function MemberVehiclesPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="dash-form">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="reg-plate" className="block text-xs font-semibold text-neutral-700 mb-1.5">
                 License Plate Number <span className="text-red-500">*</span>
@@ -153,7 +153,7 @@ export default function MemberVehiclesPage() {
                       key={item.id}
                       type="button"
                       onClick={() => setVehicleType(item.id as "FOUR_WHEELER" | "TWO_WHEELER" | "EV" | "SUV")}
-                      className={`p-2.5 rounded-lg border text-left flex flex-col justify-between transition-colors ${
+                      className={`p-2.5 rounded-lg border text-left flex flex-col justify-between transition-colors cursor-pointer ${
                         isSelected
                           ? "border-emerald-600 bg-emerald-50 text-emerald-900 font-semibold"
                           : "border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-700"
@@ -170,33 +170,33 @@ export default function MemberVehiclesPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="dash-form-submit w-full mt-2"
+              className="w-full mt-2 inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
             >
-              {submitting ? <Loader2 size={16} className="spin" /> : <Plus size={16} />}
+              {submitting ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
               <span>{submitting ? "Registering…" : "Register Vehicle"}</span>
             </button>
           </form>
         </div>
 
         {/* Existing Vehicles List */}
-        <div className="dash-panel">
-          <div className="dash-panel-header">
+        <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
             <div>
-              <h3 className="dash-panel-title">Your Fleet ({vehicles.length})</h3>
-              <p className="dash-panel-subtitle">Vehicles authorized under this account</p>
+              <h3 className="text-sm font-bold text-neutral-900">Your Fleet ({vehicles.length})</h3>
+              <p className="text-xs text-neutral-500 mt-0.5">Vehicles authorized under this account</p>
             </div>
           </div>
 
           {loading ? (
-            <div className="dash-empty py-10">
-              <Loader2 size={24} className="spin text-neutral-400 mb-2" />
-              <p>Loading vehicles…</p>
+            <div className="text-center py-10 px-6 text-neutral-400 flex flex-col items-center justify-center">
+              <Loader2 size={24} className="animate-spin text-neutral-400 mb-2" />
+              <p className="text-xs text-neutral-500">Loading vehicles…</p>
             </div>
           ) : vehicles.length === 0 ? (
-            <div className="dash-empty py-10">
+            <div className="text-center py-10 px-6 text-neutral-400 flex flex-col items-center justify-center">
               <Car size={32} />
-              <h3>No Vehicles Registered</h3>
-              <p>Register your first vehicle using the form to start booking parking.</p>
+              <h3 className="text-sm font-semibold text-neutral-800 mt-2 mb-1">No Vehicles Registered</h3>
+              <p className="text-xs text-neutral-500">Register your first vehicle using the form to start booking parking.</p>
             </div>
           ) : (
             <div className="space-y-3">

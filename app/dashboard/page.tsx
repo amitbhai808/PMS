@@ -111,10 +111,10 @@ export default function DashboardOverviewPage() {
   return (
     <div>
       {/* Top Welcome & Refresh Row */}
-      <div className="dash-page-header-row mb-6">
-        <div className="dash-page-header !mb-0">
-          <h1>Facility Live Operations</h1>
-          <p>Real-time vehicle presence, gate flow, and parking bay allocation</p>
+      <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-800 tracking-tight m-0">Facility Live Operations</h1>
+          <p className="text-neutral-500 text-xs sm:text-sm mt-1 mb-0">Real-time vehicle presence, gate flow, and parking bay allocation</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -124,51 +124,51 @@ export default function DashboardOverviewPage() {
           <button
             onClick={loadData}
             disabled={refreshing}
-            className="dash-filter-tab flex items-center gap-1.5"
+            className="px-3.5 py-1.5 border border-neutral-300 rounded-md bg-white text-neutral-600 text-xs font-medium cursor-pointer hover:bg-neutral-50 transition-colors flex items-center gap-1.5"
             title="Refresh dashboard stats"
           >
-            <RefreshCw size={13} className={refreshing ? "spin" : ""} />
+            <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
             <span>{refreshing ? "Refreshing…" : "Refresh"}</span>
           </button>
         </div>
       </div>
 
       {/* KPI Stats Grid */}
-      <div className="dash-stats">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
         {/* Occupancy Rate */}
-        <div className="dash-stat-card">
+        <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="dash-stat-label">Live Occupancy</span>
+            <span className="text-[10px] text-neutral-400 font-bold tracking-wider uppercase">Live Occupancy</span>
             <Activity size={16} className="text-emerald-700" />
           </div>
-          <div className="dash-stat-value">{occupancyPercent}%</div>
-          <div className="dash-stat-detail">
+          <div className="text-2xl sm:text-3xl font-extrabold text-neutral-800 tracking-tight mt-1">{occupancyPercent}%</div>
+          <div className="text-[11px] text-neutral-400 mt-1">
             {occupiedSlotsCount} of {totalSlotsCount} general slots filled
           </div>
         </div>
 
         {/* Available Bays */}
-        <div className="dash-stat-card">
+        <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="dash-stat-label">Available Bays</span>
+            <span className="text-[10px] text-neutral-400 font-bold tracking-wider uppercase">Available Bays</span>
             <CheckCircle2 size={16} className="text-emerald-600" />
           </div>
-          <div className="dash-stat-value text-emerald-700">{availableSlotsCount}</div>
-          <div className="dash-stat-detail">
+          <div className="text-2xl sm:text-3xl font-extrabold text-emerald-700 tracking-tight mt-1">{availableSlotsCount}</div>
+          <div className="text-[11px] text-neutral-400 mt-1">
             Ready for instant gate check-in
           </div>
         </div>
 
         {/* Active Vehicles On-Site */}
-        <div className="dash-stat-card">
+        <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="dash-stat-label">Parked Vehicles</span>
+            <span className="text-[10px] text-neutral-400 font-bold tracking-wider uppercase">Parked Vehicles</span>
             <CarFront size={16} className="text-blue-600" />
           </div>
-          <div className="dash-stat-value text-blue-700">
+          <div className="text-2xl sm:text-3xl font-extrabold text-blue-700 tracking-tight mt-1">
             {activeBookings.length > 0 ? activeBookings.length : occupiedSlotsCount}
           </div>
-          <div className="dash-stat-detail">
+          <div className="text-[11px] text-neutral-400 mt-1">
             {overdueBookingsCount > 0 ? (
               <span className="text-red-600 font-semibold flex items-center gap-1">
                 <AlertTriangle size={12} /> {overdueBookingsCount} overdue
@@ -181,28 +181,28 @@ export default function DashboardOverviewPage() {
 
         {/* Revenue or Shadow Pool */}
         {isSuperAdmin && revenueData ? (
-          <div className="dash-stat-card">
+          <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="dash-stat-label">Settled Revenue</span>
+              <span className="text-[10px] text-neutral-400 font-bold tracking-wider uppercase">Settled Revenue</span>
               <CircleDollarSign size={16} className="text-purple-600" />
             </div>
-            <div className="dash-stat-value text-purple-700">
+            <div className="text-2xl sm:text-3xl font-extrabold text-purple-700 tracking-tight mt-1">
               ₹{revenueData.liveRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
             </div>
-            <div className="dash-stat-detail">
+            <div className="text-[11px] text-neutral-400 mt-1">
               {revenueData.bookings.COMPLETED} completed departures
             </div>
           </div>
         ) : (
-          <div className="dash-stat-card">
+          <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="dash-stat-label">Special Bays</span>
+              <span className="text-[10px] text-neutral-400 font-bold tracking-wider uppercase">Special Bays</span>
               <Layers3 size={16} className="text-amber-600" />
             </div>
-            <div className="dash-stat-value text-neutral-800">
+            <div className="text-2xl sm:text-3xl font-extrabold text-neutral-800 tracking-tight mt-1">
               {shadowSlotsCount} <span className="text-sm font-normal text-neutral-500">shadow</span>
             </div>
-            <div className="dash-stat-detail">
+            <div className="text-[11px] text-neutral-400 mt-1">
               {maintenanceSlotsCount} bays under maintenance
             </div>
           </div>
@@ -210,11 +210,11 @@ export default function DashboardOverviewPage() {
       </div>
 
       {/* Quick Action Gate Launcher */}
-      <div className="dash-panel bg-gradient-to-r from-emerald-50/50 to-neutral-50 border-emerald-200/80 mb-6">
+      <div className="bg-white border border-emerald-200/80 rounded-xl p-5 mb-6 shadow-xs bg-gradient-to-r from-emerald-50/50 to-neutral-50">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="dash-panel-title">Gate Kiosk Operations</h3>
-            <p className="dash-panel-subtitle">Immediate actions for gate operators</p>
+            <h3 className="text-[15px] font-semibold text-neutral-800 m-0">Gate Kiosk Operations</h3>
+            <p className="text-[11px] text-neutral-500 mt-0.5 m-0">Immediate actions for gate operators</p>
           </div>
         </div>
 
@@ -274,11 +274,11 @@ export default function DashboardOverviewPage() {
       </div>
 
       {/* Zone Capacity Cards */}
-      <div className="dash-panel mb-6">
-        <div className="dash-panel-header">
+      <div className="bg-white border border-neutral-200 rounded-xl p-5 mb-6 shadow-xs">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="dash-panel-title">Levels & Zones Distribution</h3>
-            <p className="dash-panel-subtitle">Available bays across facility floors</p>
+            <h3 className="text-[15px] font-semibold text-neutral-800 m-0">Levels & Zones Distribution</h3>
+            <p className="text-[11px] text-neutral-500 mt-0.5 m-0">Available bays across facility floors</p>
           </div>
           <Link
             href="/dashboard/slots"
@@ -317,7 +317,7 @@ export default function DashboardOverviewPage() {
                 <div>
                   <div className="flex items-center justify-between text-xs mb-1.5">
                     <span className="text-emerald-700 font-medium">
-                      <strong>{zoneAvailable}</strong> free
+                      <strong className="font-bold">{zoneAvailable}</strong> free
                     </span>
                     <span className="text-neutral-500">{pct}% filled</span>
                   </div>
@@ -337,11 +337,11 @@ export default function DashboardOverviewPage() {
       </div>
 
       {/* Currently Parked Vehicles Table */}
-      <div className="dash-panel">
-        <div className="dash-panel-header">
+      <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="dash-panel-title">Active Parked Vehicles</h3>
-            <p className="dash-panel-subtitle">Vehicles currently occupying facility slots</p>
+            <h3 className="text-[15px] font-semibold text-neutral-800 m-0">Active Parked Vehicles</h3>
+            <p className="text-[11px] text-neutral-500 mt-0.5 m-0">Vehicles currently occupying facility slots</p>
           </div>
           <Link
             href="/dashboard/bookings"
@@ -352,23 +352,23 @@ export default function DashboardOverviewPage() {
         </div>
 
         {activeBookings.length === 0 ? (
-          <div className="dash-empty py-10">
-            <CarFront size={32} />
-            <h3>No Active Vehicles</h3>
-            <p>All parking bays are currently unoccupied. New check-ins will appear here.</p>
+          <div className="text-center py-10 px-6 text-neutral-400">
+            <CarFront size={32} className="mx-auto mb-3 text-neutral-300" />
+            <h3 className="m-0 mb-1.5 text-neutral-600 text-[15px] font-semibold">No Active Vehicles</h3>
+            <p className="m-0 text-[13px] text-neutral-500">All parking bays are currently unoccupied. New check-ins will appear here.</p>
           </div>
         ) : (
-          <div className="dash-table-wrapper">
-            <table className="dash-table">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr>
-                  <th>Vehicle Plate</th>
-                  <th>Assigned Slot</th>
-                  <th>Entry Time</th>
-                  <th>Expected Exit</th>
-                  <th>Rate</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Vehicle Plate</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Assigned Slot</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Entry Time</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Expected Exit</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Rate</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Status</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Actions</th>
                 </tr>
               </thead>
               <tbody>

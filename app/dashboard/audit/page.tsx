@@ -77,10 +77,10 @@ export default function AuditLogPage() {
 
   if (user && user.role !== "SUPERADMIN") {
     return (
-      <div className="dash-empty py-16">
+      <div className="text-center py-16 px-6 text-neutral-400 flex flex-col items-center justify-center">
         <ShieldAlert size={36} className="text-red-500 mb-2" />
-        <h3>Access Restricted</h3>
-        <p>Security audit logs are strictly restricted to SuperAdmin accounts.</p>
+        <h3 className="text-sm font-semibold text-neutral-800 mt-2 mb-1">Access Restricted</h3>
+        <p className="text-xs text-neutral-500">Security audit logs are strictly restricted to SuperAdmin accounts.</p>
       </div>
     );
   }
@@ -92,31 +92,33 @@ export default function AuditLogPage() {
   return (
     <div>
       {/* Header */}
-      <div className="dash-page-header-row mb-6">
-        <div className="dash-page-header !mb-0">
-          <h1>Security Audit Trail</h1>
-          <p>Immutable forensic record of all operational gate activities, overrides, and supervisor actions</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-neutral-900">Security Audit Trail</h1>
+          <p className="text-xs text-neutral-500 mt-1">Immutable forensic record of all operational gate activities, overrides, and supervisor actions</p>
         </div>
 
         <button
           onClick={loadAuditLogs}
           disabled={refreshing}
-          className="dash-filter-tab flex items-center gap-1.5"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-neutral-200 bg-white text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 transition-colors cursor-pointer"
         >
-          <RefreshCw size={13} className={refreshing ? "spin" : ""} />
+          <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
           <span>{refreshing ? "Refreshing…" : "Refresh Logs"}</span>
         </button>
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="dash-panel mb-6 !p-4">
+      <div className="bg-white border border-neutral-200 rounded-xl p-4 mb-6 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="dash-filter-tabs !mb-0">
+          <div className="flex items-center gap-1 p-1 bg-neutral-100 rounded-lg w-fit">
             {["ALL", "Booking", "Slot", "User"].map((ent) => (
               <button
                 key={ent}
                 onClick={() => setEntityFilter(ent)}
-                className={`dash-filter-tab ${entityFilter === ent ? "active" : ""}`}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all cursor-pointer ${
+                  entityFilter === ent ? "bg-white text-neutral-900 shadow-xs font-semibold" : "text-neutral-500 hover:text-neutral-800"
+                }`}
               >
                 {ent === "ALL" ? "All Entities" : `${ent} Events`}
               </button>
@@ -137,38 +139,38 @@ export default function AuditLogPage() {
       </div>
 
       {/* Audit Log Table */}
-      <div className="dash-panel">
-        <div className="dash-panel-header">
+      <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
           <div>
-            <h3 className="dash-panel-title">Audit Records ({filteredLogs.length})</h3>
-            <p className="dash-panel-subtitle">Newest entries listed first</p>
+            <h3 className="text-sm font-bold text-neutral-900">Audit Records ({filteredLogs.length})</h3>
+            <p className="text-xs text-neutral-500 mt-0.5">Newest entries listed first</p>
           </div>
         </div>
 
         {loading ? (
-          <div className="dash-empty py-12">
-            <Loader2 size={24} className="spin text-neutral-400 mb-2" />
-            <p>Loading security audit entries…</p>
+          <div className="text-center py-12 px-6 text-neutral-400 flex flex-col items-center justify-center">
+            <Loader2 size={24} className="animate-spin text-neutral-400 mb-2" />
+            <p className="text-xs text-neutral-500">Loading security audit entries…</p>
           </div>
         ) : filteredLogs.length === 0 ? (
-          <div className="dash-empty py-12">
+          <div className="text-center py-12 px-6 text-neutral-400 flex flex-col items-center justify-center">
             <FileText size={32} />
-            <h3>No Audit Logs Found</h3>
-            <p>No audit events match the active search or entity filter.</p>
+            <h3 className="text-sm font-semibold text-neutral-800 mt-2 mb-1">No Audit Logs Found</h3>
+            <p className="text-xs text-neutral-500">No audit events match the active search or entity filter.</p>
           </div>
         ) : (
-          <div className="dash-table-wrapper">
-            <table className="dash-table">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr>
-                  <th>Timestamp</th>
-                  <th>Actor / Supervisor</th>
-                  <th>Action Event</th>
-                  <th>Target Entity</th>
-                  <th>Details & Payload</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Timestamp</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Actor / Supervisor</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Action Event</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Target Entity</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Details & Payload</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-neutral-100">
                 {filteredLogs.map((log) => {
                   const isExpanded = expandedId === log.id;
                   let parsedDetails: Record<string, unknown> | null = null;
@@ -179,9 +181,13 @@ export default function AuditLogPage() {
                   }
 
                   return (
-                    <tr key={log.id} className="cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : log.id)}>
+                    <tr
+                      key={log.id}
+                      className="hover:bg-neutral-50/70 transition-colors cursor-pointer"
+                      onClick={() => setExpandedId(isExpanded ? null : log.id)}
+                    >
                       {/* Timestamp */}
-                      <td>
+                      <td className="p-2.5 sm:px-3 align-middle">
                         <div className="text-xs">
                           <span className="font-mono text-neutral-800">
                             {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
@@ -193,7 +199,7 @@ export default function AuditLogPage() {
                       </td>
 
                       {/* Actor */}
-                      <td>
+                      <td className="p-2.5 sm:px-3 align-middle">
                         {log.actor ? (
                           <div className="text-xs">
                             <strong className="text-neutral-900 block">{log.actor.name}</strong>
@@ -205,14 +211,14 @@ export default function AuditLogPage() {
                       </td>
 
                       {/* Event */}
-                      <td>
+                      <td className="p-2.5 sm:px-3 align-middle">
                         <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-neutral-100 text-neutral-800 border border-neutral-300">
                           {log.event}
                         </span>
                       </td>
 
                       {/* Entity */}
-                      <td>
+                      <td className="p-2.5 sm:px-3 align-middle">
                         <div className="text-xs">
                           <span className="font-semibold text-neutral-700">{log.entityType}</span>
                           {log.entityId && (
@@ -224,7 +230,7 @@ export default function AuditLogPage() {
                       </td>
 
                       {/* Details */}
-                      <td>
+                      <td className="p-2.5 sm:px-3 align-middle">
                         <div className="text-xs">
                           {parsedDetails ? (
                             <div className="space-y-1">

@@ -125,40 +125,49 @@ export default function ParkingLayoutPage() {
   return (
     <div>
       {/* Header */}
-      <div className="dash-page-header-row mb-6">
-        <div className="dash-page-header !mb-0">
-          <h1>Parking Bays Layout</h1>
-          <p>Live visual map of all bays across facility zones</p>
+      <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-800 tracking-tight m-0">Parking Bays Layout</h1>
+          <p className="text-neutral-500 text-xs sm:text-sm mt-1 mb-0">Live visual map of all bays across facility zones</p>
         </div>
 
         <button
           onClick={loadSlotsAndZones}
           disabled={refreshing}
-          className="dash-filter-tab flex items-center gap-1.5"
+          className="px-3.5 py-1.5 border border-neutral-300 rounded-md bg-white text-neutral-600 text-xs font-medium cursor-pointer hover:bg-neutral-50 transition-colors flex items-center gap-1.5"
         >
-          <RefreshCw size={13} className={refreshing ? "spin" : ""} />
+          <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
           <span>{refreshing ? "Refreshing…" : "Refresh Bays"}</span>
         </button>
       </div>
 
       {/* Control Bar: Zone tabs, search, status filter */}
-      <div className="dash-panel mb-6 !p-4">
+      <div className="bg-white border border-neutral-200 rounded-xl p-4 mb-6 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Zone Selector Tabs */}
-          <div className="dash-filter-tabs !mb-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <button
               onClick={() => setSelectedZoneId("ALL")}
-              className={`dash-filter-tab ${selectedZoneId === "ALL" ? "active" : ""}`}
+              className={`px-3 py-1.5 border rounded-md text-xs font-medium cursor-pointer transition-colors ${
+                selectedZoneId === "ALL"
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold"
+                  : "border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50"
+              }`}
             >
               All Zones ({slots.length})
             </button>
             {zones.map((zone) => {
               const count = slots.filter((s) => s.zoneId === zone.id).length;
+              const active = selectedZoneId === zone.id;
               return (
                 <button
                   key={zone.id}
                   onClick={() => setSelectedZoneId(zone.id)}
-                  className={`dash-filter-tab ${selectedZoneId === zone.id ? "active" : ""}`}
+                  className={`px-3 py-1.5 border rounded-md text-xs font-medium cursor-pointer transition-colors ${
+                    active
+                      ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold"
+                      : "border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50"
+                  }`}
                 >
                   {zone.name} ({count})
                 </button>
@@ -196,25 +205,30 @@ export default function ParkingLayoutPage() {
           <span className="text-xs text-neutral-400 flex items-center gap-1 mr-1">
             <Filter size={12} /> Status:
           </span>
-          {["ALL", "AVAILABLE", "OCCUPIED", "MAINTENANCE"].map((st) => (
-            <button
-              key={st}
-              onClick={() => setSelectedStatus(st)}
-              className={`dash-filter-tab !py-1 !px-2.5 !text-xs ${
-                selectedStatus === st ? "active" : ""
-              }`}
-            >
-              {st === "ALL" ? "All" : st.charAt(0) + st.slice(1).toLowerCase()}
-            </button>
-          ))}
+          {["ALL", "AVAILABLE", "OCCUPIED", "MAINTENANCE"].map((st) => {
+            const active = selectedStatus === st;
+            return (
+              <button
+                key={st}
+                onClick={() => setSelectedStatus(st)}
+                className={`py-1 px-2.5 text-xs border rounded-md font-medium cursor-pointer transition-colors ${
+                  active
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold"
+                    : "border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50"
+                }`}
+              >
+                {st === "ALL" ? "All" : st.charAt(0) + st.slice(1).toLowerCase()}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Grid rendering grouped by zone if 'ALL' is selected, or single grid */}
       {loading ? (
-        <div className="dash-empty py-16">
-          <Loader2 size={24} className="spin text-neutral-400 mb-2" />
-          <p>Loading parking bays layout…</p>
+        <div className="text-center py-16 px-6 text-neutral-400">
+          <Loader2 size={24} className="animate-spin text-neutral-400 mb-2 mx-auto" />
+          <p className="text-xs">Loading parking bays layout…</p>
         </div>
       ) : selectedZoneId === "ALL" ? (
         zones.map((zone) => {
@@ -280,7 +294,7 @@ export default function ParkingLayoutPage() {
             </div>
 
             {overrideError && (
-              <div className="login-error !mb-4">{overrideError}</div>
+              <div className="p-3 px-3.5 mb-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs font-medium">{overrideError}</div>
             )}
 
             <form onSubmit={handleOverrideSubmit} className="space-y-4">
@@ -318,16 +332,16 @@ export default function ParkingLayoutPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedSlot(null)}
-                  className="dash-form-reset !h-8 !text-xs !px-3"
+                  className="h-8 text-xs px-3 rounded-lg border border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50 transition-colors font-medium cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={overrideLoading}
-                  className="dash-form-submit !h-8 !text-xs !px-4"
+                  className="h-8 text-xs px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 text-white font-medium transition-colors cursor-pointer flex items-center gap-1.5"
                 >
-                  {overrideLoading ? <Loader2 size={13} className="spin" /> : <ShieldAlert size={13} />}
+                  {overrideLoading ? <Loader2 size={13} className="animate-spin" /> : <ShieldAlert size={13} />}
                   <span>Save Status</span>
                 </button>
               </div>

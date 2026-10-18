@@ -30,7 +30,10 @@ export function OverstayBadge({ expectedExit, actualExit, status }: OverstayBadg
     const remainingMinutes = Math.ceil(-diffMs / 60_000);
     if (remainingMinutes <= 15) {
       return (
-        <span className="status-badge pending" title={`Departs in ${remainingMinutes}m`}>
+        <span
+          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide uppercase bg-amber-50 text-amber-800 border border-amber-200"
+          title={`Departs in ${remainingMinutes}m`}
+        >
           <Clock size={12} /> {remainingMinutes}m left
         </span>
       );
@@ -44,7 +47,10 @@ export function OverstayBadge({ expectedExit, actualExit, status }: OverstayBadg
   const label = hours > 0 ? `${hours}h ${minutes}m overdue` : `${minutes}m overdue`;
 
   return (
-    <span className="status-badge overdue" title={`Exceeded expected exit by ${label}`}>
+    <span
+      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide uppercase bg-red-50 text-red-700 border border-red-200"
+      title={`Exceeded expected exit by ${label}`}
+    >
       <AlertTriangle size={12} /> {label}
     </span>
   );

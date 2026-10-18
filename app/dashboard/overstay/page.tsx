@@ -43,17 +43,17 @@ export default function OverstayAlertsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="dash-page-header-row mb-6">
-        <div className="dash-page-header !mb-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
           <div className="flex items-center gap-2">
-            <h1>Overstay & Violation Watch</h1>
+            <h1 className="text-xl font-bold tracking-tight text-neutral-900">Overstay & Violation Watch</h1>
             {overstayBookings.length > 0 && (
-              <span className="status-badge overdue !text-xs font-bold px-2 py-0.5">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-300">
                 {overstayBookings.length} Alert{overstayBookings.length === 1 ? "" : "s"}
               </span>
             )}
           </div>
-          <p>Real-time monitor of active parked vehicles that have exceeded their expected exit times</p>
+          <p className="text-xs text-neutral-500 mt-1">Real-time monitor of active parked vehicles that have exceeded their expected exit times</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -63,16 +63,16 @@ export default function OverstayAlertsPage() {
           <button
             onClick={loadOverstays}
             disabled={refreshing}
-            className="dash-filter-tab flex items-center gap-1.5"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-neutral-200 bg-white text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 transition-colors cursor-pointer"
           >
-            <RefreshCw size={13} className={refreshing ? "spin" : ""} />
+            <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
             <span>{refreshing ? "Checking…" : "Check Overstays"}</span>
           </button>
         </div>
       </div>
 
       {/* Overview Banner */}
-      <div className="dash-panel mb-6 !p-4 bg-gradient-to-r from-red-50/60 to-white border-red-200/70">
+      <div className="bg-gradient-to-r from-red-50/60 to-white border border-red-200/70 rounded-xl p-4 mb-6 shadow-xs">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0 text-red-700">
             <AlertTriangle size={20} />
@@ -91,42 +91,42 @@ export default function OverstayAlertsPage() {
       </div>
 
       {/* Overstay Records Table */}
-      <div className="dash-panel">
-        <div className="dash-panel-header">
+      <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
           <div>
-            <h3 className="dash-panel-title">Vehicles Past Expected Departure</h3>
-            <p className="dash-panel-subtitle">Sorted by longest overdue first</p>
+            <h3 className="text-sm font-bold text-neutral-900">Vehicles Past Expected Departure</h3>
+            <p className="text-xs text-neutral-500 mt-0.5">Sorted by longest overdue first</p>
           </div>
         </div>
 
         {loading ? (
-          <div className="dash-empty py-12">
-            <Loader2 size={24} className="spin text-neutral-400 mb-2" />
-            <p>Scanning facility bays for overstays…</p>
+          <div className="text-center py-12 px-6 text-neutral-400 flex flex-col items-center justify-center">
+            <Loader2 size={24} className="animate-spin text-neutral-400 mb-2" />
+            <p className="text-xs text-neutral-500">Scanning facility bays for overstays…</p>
           </div>
         ) : overstayBookings.length === 0 ? (
-          <div className="dash-empty py-14">
+          <div className="text-center py-14 px-6 text-neutral-400 flex flex-col items-center justify-center">
             <CheckCircle2 size={36} className="text-emerald-600 mb-2" />
-            <h3>Zero Overstay Violations</h3>
-            <p>All vehicles currently parked inside the facility are within their permitted parking windows.</p>
+            <h3 className="text-sm font-semibold text-neutral-800 mt-2 mb-1">Zero Overstay Violations</h3>
+            <p className="text-xs text-neutral-500">All vehicles currently parked inside the facility are within their permitted parking windows.</p>
           </div>
         ) : (
-          <div className="dash-table-wrapper">
-            <table className="dash-table">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr>
-                  <th>Vehicle Plate</th>
-                  <th>Bay Location</th>
-                  <th>Scheduled Departure</th>
-                  <th>Overdue Duration</th>
-                  <th>Base Rate</th>
-                  <th>Gate Actions</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Vehicle Plate</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Bay Location</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Scheduled Departure</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Overdue Duration</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Base Rate</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Gate Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-neutral-100">
                 {overstayBookings.map((b) => (
-                  <tr key={b.id} className="overstay-row">
-                    <td>
+                  <tr key={b.id} className="bg-red-50/40 hover:bg-red-50/70 transition-colors">
+                    <td className="p-2.5 sm:px-3 align-middle">
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-bold tracking-wider text-sm px-2 py-0.5 rounded bg-white border border-red-200 text-red-900 shadow-2xs">
                           {b.licensePlate}
@@ -139,7 +139,7 @@ export default function OverstayAlertsPage() {
                       </div>
                     </td>
 
-                    <td>
+                    <td className="p-2.5 sm:px-3 align-middle">
                       <span className="font-bold text-xs px-2 py-0.5 rounded bg-white border border-neutral-200">
                         {b.slot?.code ?? "—"}
                       </span>
@@ -148,7 +148,7 @@ export default function OverstayAlertsPage() {
                       </div>
                     </td>
 
-                    <td>
+                    <td className="p-2.5 sm:px-3 align-middle">
                       <div className="text-xs">
                         <span className="font-medium text-neutral-800">
                           {new Date(b.expectedExit).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -159,7 +159,7 @@ export default function OverstayAlertsPage() {
                       </div>
                     </td>
 
-                    <td>
+                    <td className="p-2.5 sm:px-3 align-middle">
                       <OverstayBadge
                         expectedExit={b.expectedExit}
                         actualExit={b.actualExit}
@@ -167,7 +167,7 @@ export default function OverstayAlertsPage() {
                       />
                     </td>
 
-                    <td>
+                    <td className="p-2.5 sm:px-3 align-middle">
                       <div className="text-xs font-semibold text-neutral-700">
                         ₹{(b.hourlyRatePaise / 100).toFixed(2)}/hr
                       </div>
@@ -176,7 +176,7 @@ export default function OverstayAlertsPage() {
                       </div>
                     </td>
 
-                    <td>
+                    <td className="p-2.5 sm:px-3 align-middle">
                       <div className="flex items-center gap-2">
                         <Link
                           href={`/dashboard/exit?plate=${encodeURIComponent(b.licensePlate)}`}

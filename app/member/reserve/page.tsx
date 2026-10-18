@@ -138,13 +138,13 @@ function ReserveForm() {
 
   return (
     <div className="max-w-2xl">
-      <div className="dash-page-header">
-        <h1>Reserve a Parking Bay</h1>
-        <p>Pre-book guaranteed parking with 30-minute arrival grace buffer</p>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold tracking-tight text-neutral-900">Reserve a Parking Bay</h1>
+        <p className="text-xs text-neutral-500 mt-1">Pre-book guaranteed parking with 30-minute arrival grace buffer</p>
       </div>
 
       {result ? (
-        <div className="dash-result-card animate-in fade-in zoom-in-95 duration-150">
+        <div className="bg-emerald-50/50 border border-emerald-200 rounded-xl p-5 mb-6 shadow-xs animate-in fade-in zoom-in-95 duration-150">
           <div className="flex items-center gap-2 pb-3 border-b border-emerald-200 mb-4">
             <CheckCircle2 size={24} className="text-emerald-700" />
             <div>
@@ -169,7 +169,7 @@ function ReserveForm() {
             </div>
           </div>
 
-          <dl className="dash-result-detail text-sm mb-6">
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm mb-6 [&>dt]:font-medium [&>dt]:text-neutral-500 [&>dd]:text-neutral-900 [&>dd]:m-0">
             <dt>Vehicle Plate:</dt>
             <dd className="font-mono text-base">{result.licensePlate}</dd>
 
@@ -188,14 +188,14 @@ function ReserveForm() {
           <div className="flex justify-end gap-3">
             <Link
               href="/member"
-              className="dash-form-submit"
+              className="inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
             >
               Return to My Dashboard
             </Link>
           </div>
         </div>
       ) : (
-        <div className="dash-panel">
+        <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
           {error && (
             <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2">
               <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
@@ -204,24 +204,24 @@ function ReserveForm() {
           )}
 
           {loadingVehicles ? (
-            <div className="dash-empty py-10">
-              <Loader2 size={24} className="spin text-neutral-400 mb-2" />
-              <p>Checking your fleet…</p>
+            <div className="text-center py-10 px-6 text-neutral-400 flex flex-col items-center justify-center">
+              <Loader2 size={24} className="animate-spin text-neutral-400 mb-2" />
+              <p className="text-xs text-neutral-500">Checking your fleet…</p>
             </div>
           ) : vehicles.length === 0 ? (
-            <div className="dash-empty py-8">
+            <div className="text-center py-8 px-6 text-neutral-400 flex flex-col items-center justify-center">
               <CarFront size={32} />
-              <h3>Vehicle Registration Required</h3>
-              <p className="mb-4">You need to register at least one vehicle before making a reservation.</p>
+              <h3 className="text-sm font-semibold text-neutral-800 mt-2 mb-1">Vehicle Registration Required</h3>
+              <p className="text-xs text-neutral-500 mb-4">You need to register at least one vehicle before making a reservation.</p>
               <Link
                 href="/member/vehicles"
-                className="dash-form-submit inline-flex !h-9 !px-4"
+                className="inline-flex items-center gap-1.5 h-9 px-4 bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
               >
                 Register Your Vehicle First →
               </Link>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="dash-form">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {/* Select Vehicle */}
               <div>
                 <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
@@ -242,7 +242,7 @@ function ReserveForm() {
               </div>
 
               {/* Arrival DateTime */}
-              <div className="dash-form-row">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="reserve-entry" className="block text-xs font-semibold text-neutral-700 mb-1.5">
                     Expected Arrival Time <span className="text-red-500">*</span>
@@ -282,13 +282,13 @@ function ReserveForm() {
               </div>
 
               {/* Actions */}
-              <div className="dash-form-actions pt-2">
+              <div className="pt-2 flex items-center gap-3">
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="dash-form-submit flex-1"
+                  className="flex-1 inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
                 >
-                  {submitting ? <Loader2 size={16} className="spin" /> : <CalendarCheck size={16} />}
+                  {submitting ? <Loader2 size={16} className="animate-spin" /> : <CalendarCheck size={16} />}
                   <span>{submitting ? "Searching & Reserving Bay…" : "Confirm Reservation"}</span>
                 </button>
               </div>
@@ -302,7 +302,7 @@ function ReserveForm() {
 
 export default function ReservePage() {
   return (
-    <Suspense fallback={<div className="dash-loading"><Loader2 size={24} className="spin" /><p>Loading reservation form…</p></div>}>
+    <Suspense fallback={<div className="min-h-[300px] flex flex-col items-center justify-center gap-3 text-neutral-400 text-sm"><Loader2 size={24} className="animate-spin text-emerald-700" /><p>Loading reservation form…</p></div>}>
       <ReserveForm />
     </Suspense>
   );

@@ -97,13 +97,13 @@ export default function SlotOverridePage() {
 
   return (
     <div className="max-w-2xl">
-      <div className="dash-page-header">
-        <h1>Manual Bay Status Override</h1>
-        <p>Direct supervisor override to force bay availability, lock for inspection, or clear holds</p>
+      <div className="mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-neutral-800 tracking-tight m-0">Manual Bay Status Override</h1>
+        <p className="text-neutral-500 text-xs sm:text-sm mt-1 mb-0">Direct supervisor override to force bay availability, lock for inspection, or clear holds</p>
       </div>
 
       {successData ? (
-        <div className="dash-result-card animate-in fade-in zoom-in-95 duration-150">
+        <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-5 sm:p-6 mt-4 animate-in fade-in zoom-in-95 duration-150">
           <div className="flex items-center gap-2 pb-3 border-b border-emerald-200 mb-4">
             <CheckCircle2 size={22} className="text-emerald-700" />
             <h3 className="!m-0 text-base font-bold text-emerald-800">
@@ -111,7 +111,7 @@ export default function SlotOverridePage() {
             </h3>
           </div>
 
-          <dl className="dash-result-detail text-sm mb-5">
+          <dl className="grid grid-cols-[140px_1fr] gap-x-3 gap-y-2 text-sm mb-5 [&>dt]:text-neutral-500 [&>dt]:font-medium [&>dd]:text-neutral-800 [&>dd]:font-semibold [&>dd]:m-0">
             <dt>Bay Identifier:</dt>
             <dd className="font-mono text-base font-bold">{successData.code}</dd>
 
@@ -129,14 +129,14 @@ export default function SlotOverridePage() {
             <button
               type="button"
               onClick={handleReset}
-              className="dash-form-submit"
+              className="inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
             >
               Perform Another Override
             </button>
           </div>
         </div>
       ) : (
-        <div className="dash-panel">
+        <div className="bg-white border border-neutral-200 rounded-xl p-5 sm:p-6 shadow-xs">
           {error && (
             <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2">
               <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
@@ -144,7 +144,7 @@ export default function SlotOverridePage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="dash-form">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4.5">
             {/* Slot Picker */}
             <div>
               <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
@@ -153,7 +153,7 @@ export default function SlotOverridePage() {
 
               {loadingSlots ? (
                 <div className="p-3 text-xs text-neutral-500 flex items-center gap-2">
-                  <Loader2 size={16} className="spin" /> Loading facility bays…
+                  <Loader2 size={16} className="animate-spin" /> Loading facility bays…
                 </div>
               ) : (
                 <div>
@@ -255,19 +255,19 @@ export default function SlotOverridePage() {
             </div>
 
             {/* Actions */}
-            <div className="dash-form-actions pt-2">
+            <div className="flex items-center gap-3 pt-2">
               <button
                 type="submit"
                 disabled={submitting || !selectedSlotCode}
-                className="dash-form-submit flex-1"
+                className="flex-1 inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
               >
-                {submitting ? <Loader2 size={16} className="spin" /> : <ShieldAlert size={16} />}
+                {submitting ? <Loader2 size={16} className="animate-spin" /> : <ShieldAlert size={16} />}
                 <span>{submitting ? "Applying Override…" : "Commit Status Override"}</span>
               </button>
               <button
                 type="button"
                 onClick={handleReset}
-                className="dash-form-reset"
+                className="h-10 px-4 rounded-lg border border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50 transition-colors font-medium text-xs cursor-pointer"
               >
                 Reset
               </button>

@@ -116,10 +116,10 @@ export default function UserManagementPage() {
 
   if (currentUser && currentUser.role !== "SUPERADMIN") {
     return (
-      <div className="dash-empty py-16">
+      <div className="text-center py-16 px-6 text-neutral-400 flex flex-col items-center justify-center">
         <ShieldAlert size={36} className="text-red-500 mb-2" />
-        <h3>Access Restricted</h3>
-        <p>User account administration is restricted to SuperAdmin accounts.</p>
+        <h3 className="text-sm font-semibold text-neutral-800 mt-2 mb-1">Access Restricted</h3>
+        <p className="text-xs text-neutral-500">User account administration is restricted to SuperAdmin accounts.</p>
       </div>
     );
   }
@@ -127,16 +127,16 @@ export default function UserManagementPage() {
   return (
     <div>
       {/* Header */}
-      <div className="dash-page-header-row mb-6">
-        <div className="dash-page-header !mb-0">
-          <h1>User & Staff Administration</h1>
-          <p>Manage facility operations team, supervisors, and registered members</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-neutral-900">User & Staff Administration</h1>
+          <p className="text-xs text-neutral-500 mt-1">Manage facility operations team, supervisors, and registered members</p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="dash-form-submit !h-9 !px-3.5 !text-xs"
+            className="inline-flex items-center gap-1.5 h-9 px-3.5 bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
           >
             <UserPlus size={14} />
             <span>Create Staff Account</span>
@@ -145,23 +145,25 @@ export default function UserManagementPage() {
           <button
             onClick={loadUsers}
             disabled={refreshing}
-            className="dash-filter-tab flex items-center gap-1.5"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-neutral-200 bg-white text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 transition-colors cursor-pointer"
           >
-            <RefreshCw size={13} className={refreshing ? "spin" : ""} />
+            <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
             <span>{refreshing ? "Refreshing…" : "Refresh"}</span>
           </button>
         </div>
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="dash-panel mb-6 !p-4">
+      <div className="bg-white border border-neutral-200 rounded-xl p-4 mb-6 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="dash-filter-tabs !mb-0">
+          <div className="flex items-center gap-1 p-1 bg-neutral-100 rounded-lg w-fit">
             {["ALL", "SUPERADMIN", "OPERATOR", "MEMBER"].map((r) => (
               <button
                 key={r}
                 onClick={() => setRoleFilter(r)}
-                className={`dash-filter-tab ${roleFilter === r ? "active" : ""}`}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all cursor-pointer ${
+                  roleFilter === r ? "bg-white text-neutral-900 shadow-xs font-semibold" : "text-neutral-500 hover:text-neutral-800"
+                }`}
               >
                 {r === "ALL" ? "All Accounts" : r.charAt(0) + r.slice(1).toLowerCase()} ({
                   r === "ALL" ? users.length : users.filter((u) => u.role === r).length
@@ -184,42 +186,42 @@ export default function UserManagementPage() {
       </div>
 
       {/* Users Table */}
-      <div className="dash-panel">
-        <div className="dash-panel-header">
+      <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
           <div>
-            <h3 className="dash-panel-title">Accounts ({filteredUsers.length})</h3>
-            <p className="dash-panel-subtitle">Sorted by registration date</p>
+            <h3 className="text-sm font-bold text-neutral-900">Accounts ({filteredUsers.length})</h3>
+            <p className="text-xs text-neutral-500 mt-0.5">Sorted by registration date</p>
           </div>
         </div>
 
         {loading ? (
-          <div className="dash-empty py-12">
-            <Loader2 size={24} className="spin text-neutral-400 mb-2" />
-            <p>Loading user registry…</p>
+          <div className="text-center py-12 px-6 text-neutral-400 flex flex-col items-center justify-center">
+            <Loader2 size={24} className="animate-spin text-neutral-400 mb-2" />
+            <p className="text-xs text-neutral-500">Loading user registry…</p>
           </div>
         ) : filteredUsers.length === 0 ? (
-          <div className="dash-empty py-12">
+          <div className="text-center py-12 px-6 text-neutral-400 flex flex-col items-center justify-center">
             <Users size={32} />
-            <h3>No Accounts Found</h3>
-            <p>No user accounts matched the filter or search query.</p>
+            <h3 className="text-sm font-semibold text-neutral-800 mt-2 mb-1">No Accounts Found</h3>
+            <p className="text-xs text-neutral-500">No user accounts matched the filter or search query.</p>
           </div>
         ) : (
-          <div className="dash-table-wrapper">
-            <table className="dash-table">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr>
-                  <th>User Profile</th>
-                  <th>Contact Info</th>
-                  <th>Access Role</th>
-                  <th>Registered Date</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">User Profile</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Contact Info</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Access Role</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Registered Date</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-neutral-100">
                 {filteredUsers.map((u) => (
-                  <tr key={u.id}>
-                    <td>
+                  <tr key={u.id} className="hover:bg-neutral-50/70 transition-colors">
+                    <td className="p-2.5 sm:px-3 align-middle">
                       <div className="flex items-center gap-2.5">
-                        <span className="dash-avatar !w-8 !h-8 !text-xs">
+                        <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs font-bold shrink-0">
                           {u.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
                         </span>
                         <div>
@@ -229,7 +231,7 @@ export default function UserManagementPage() {
                       </div>
                     </td>
 
-                    <td>
+                    <td className="p-2.5 sm:px-3 align-middle">
                       <div className="text-xs space-y-0.5">
                         <div className="flex items-center gap-1.5 text-neutral-700">
                           <Mail size={12} className="text-neutral-400" />
@@ -244,13 +246,19 @@ export default function UserManagementPage() {
                       </div>
                     </td>
 
-                    <td>
-                      <span className={`status-badge ${u.role.toLowerCase()}`}>
+                    <td className="p-2.5 sm:px-3 align-middle">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${
+                        u.role === "SUPERADMIN"
+                          ? "bg-purple-50 text-purple-700 border-purple-200"
+                          : u.role === "OPERATOR"
+                          ? "bg-blue-50 text-blue-700 border-blue-200"
+                          : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      }`}>
                         {u.role === "SUPERADMIN" ? "Super Admin" : u.role}
                       </span>
                     </td>
 
-                    <td>
+                    <td className="p-2.5 sm:px-3 align-middle">
                       <div className="text-xs text-neutral-600 flex items-center gap-1">
                         <Calendar size={12} className="text-neutral-400" />
                         <span>{new Date(u.createdAt).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}</span>
@@ -282,7 +290,7 @@ export default function UserManagementPage() {
             </div>
 
             {modalError && (
-              <div className="login-error !mb-4">{modalError}</div>
+              <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">{modalError}</div>
             )}
 
             <form onSubmit={handleCreateStaff} className="space-y-3.5">
@@ -369,16 +377,16 @@ export default function UserManagementPage() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="dash-form-reset !h-8 !text-xs !px-3"
+                  className="h-8 px-3 rounded-lg border border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50 transition-colors font-medium text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={modalLoading}
-                  className="dash-form-submit !h-8 !text-xs !px-4"
+                  className="inline-flex items-center justify-center gap-1.5 h-8 px-4 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
                 >
-                  {modalLoading ? <Loader2 size={13} className="spin" /> : <UserPlus size={13} />}
+                  {modalLoading ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />}
                   <span>Create Account</span>
                 </button>
               </div>

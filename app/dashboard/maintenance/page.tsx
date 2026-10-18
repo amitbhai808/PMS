@@ -99,21 +99,21 @@ export default function MaintenancePage() {
 
   return (
     <div className="max-w-4xl">
-      <div className="dash-page-header">
-        <h1>Bay Maintenance Management</h1>
-        <p>Flag bays out-of-order for cleaning or repair, and manage active work orders</p>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold tracking-tight text-neutral-900">Bay Maintenance Management</h1>
+        <p className="text-xs text-neutral-500 mt-1">Flag bays out-of-order for cleaning or repair, and manage active work orders</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Form to Flag for Maintenance */}
-        <div className="dash-panel">
-          <div className="dash-panel-header">
+        <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
             <div>
-              <h3 className="dash-panel-title flex items-center gap-2">
+              <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
                 <Wrench size={16} className="text-amber-600" />
                 Schedule Maintenance
               </h3>
-              <p className="dash-panel-subtitle">Take an available bay out of service</p>
+              <p className="text-xs text-neutral-500 mt-0.5">Take an available bay out of service</p>
             </div>
           </div>
 
@@ -124,7 +124,7 @@ export default function MaintenancePage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="dash-form">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
                 Target Available Bay <span className="text-red-500">*</span>
@@ -175,35 +175,35 @@ export default function MaintenancePage() {
             <button
               type="submit"
               disabled={submitting || !slotCode}
-              className="dash-form-submit w-full mt-2"
+              className="w-full mt-2 inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
             >
-              {submitting ? <Loader2 size={16} className="spin" /> : <Wrench size={16} />}
+              {submitting ? <Loader2 size={16} className="animate-spin" /> : <Wrench size={16} />}
               <span>{submitting ? "Flagging Bay…" : "Flag Bay For Maintenance"}</span>
             </button>
           </form>
         </div>
 
         {/* Current Bays in Maintenance Panel */}
-        <div className="dash-panel">
-          <div className="dash-panel-header">
+        <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
             <div>
-              <h3 className="dash-panel-title flex items-center gap-2">
+              <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
                 <Clock size={16} className="text-neutral-500" />
                 Active Maintenance Bays ({maintenanceSlots.length})
               </h3>
-              <p className="dash-panel-subtitle">Currently blocked from gate allocation</p>
+              <p className="text-xs text-neutral-500 mt-0.5">Currently blocked from gate allocation</p>
             </div>
           </div>
 
           {loading ? (
-            <div className="dash-empty py-8">
-              <Loader2 size={20} className="spin text-neutral-400" />
+            <div className="text-center py-8 px-6 text-neutral-400 flex flex-col items-center justify-center">
+              <Loader2 size={20} className="animate-spin text-neutral-400" />
             </div>
           ) : maintenanceSlots.length === 0 ? (
-            <div className="dash-empty py-10">
+            <div className="text-center py-10 px-6 text-neutral-400 flex flex-col items-center justify-center">
               <CheckCircle2 size={32} className="text-emerald-600 mb-2" />
-              <h3>All Systems Operational</h3>
-              <p>Zero bays currently marked under maintenance.</p>
+              <h3 className="text-sm font-semibold text-neutral-800 mt-2 mb-1">All Systems Operational</h3>
+              <p className="text-xs text-neutral-500">Zero bays currently marked under maintenance.</p>
             </div>
           ) : (
             <div className="space-y-2.5 max-h-96 overflow-y-auto pr-1">

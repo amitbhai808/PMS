@@ -125,9 +125,9 @@ function ExitForm() {
 
   return (
     <div className="max-w-2xl">
-      <div className="dash-page-header">
-        <h1>Exit Gate Departure & Billing</h1>
-        <p>Complete parking session, compute duration and overstay fees, and collect payment</p>
+      <div className="mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-neutral-800 tracking-tight m-0">Exit Gate Departure & Billing</h1>
+        <p className="text-neutral-500 text-xs sm:text-sm mt-1 mb-0">Complete parking session, compute duration and overstay fees, and collect payment</p>
       </div>
 
       {exitResult ? (
@@ -140,7 +140,7 @@ function ExitForm() {
           onDone={handleReset}
         />
       ) : (
-        <div className="dash-panel">
+        <div className="bg-white border border-neutral-200 rounded-xl p-5 sm:p-6 shadow-xs">
           {error && (
             <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2">
               <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
@@ -148,20 +148,28 @@ function ExitForm() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="dash-form">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4.5">
             {/* Mode Selector */}
-            <div className="dash-filter-tabs !mb-2">
+            <div className="flex items-center gap-1.5 flex-wrap mb-2">
               <button
                 type="button"
                 onClick={() => setSearchMethod("select")}
-                className={`dash-filter-tab ${searchMethod === "select" ? "active" : ""}`}
+                className={`px-3.5 py-1.5 border rounded-md text-xs font-medium cursor-pointer transition-colors ${
+                  searchMethod === "select"
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold"
+                    : "border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50"
+                }`}
               >
                 Pick from Parked Vehicles ({activeVehicles.length})
               </button>
               <button
                 type="button"
                 onClick={() => setSearchMethod("plate")}
-                className={`dash-filter-tab ${searchMethod === "plate" ? "active" : ""}`}
+                className={`px-3.5 py-1.5 border rounded-md text-xs font-medium cursor-pointer transition-colors ${
+                  searchMethod === "plate"
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold"
+                    : "border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50"
+                }`}
               >
                 Type Plate or ID Manually
               </button>
@@ -174,7 +182,7 @@ function ExitForm() {
                 </label>
                 {loadingActive ? (
                   <div className="p-4 text-xs text-neutral-500 flex items-center gap-2">
-                    <Loader2 size={16} className="spin" /> Loading parked vehicles…
+                    <Loader2 size={16} className="animate-spin text-emerald-700" /> Loading parked vehicles…
                   </div>
                 ) : activeVehicles.length === 0 ? (
                   <div className="p-4 rounded-lg bg-neutral-50 text-xs text-neutral-500 border border-neutral-200">
@@ -286,19 +294,19 @@ function ExitForm() {
             </div>
 
             {/* Actions */}
-            <div className="dash-form-actions pt-2">
+            <div className="flex items-center gap-2.5 pt-2">
               <button
                 type="submit"
                 disabled={submitting || (!bookingId && !licensePlate.trim())}
-                className="dash-form-submit flex-1"
+                className="flex-1 inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
               >
-                {submitting ? <Loader2 size={16} className="spin" /> : <DoorClosed size={16} />}
+                {submitting ? <Loader2 size={16} className="animate-spin" /> : <DoorClosed size={16} />}
                 <span>{submitting ? "Calculating & Billing…" : "Process Departure & Release Bay"}</span>
               </button>
               <button
                 type="button"
                 onClick={handleReset}
-                className="dash-form-reset"
+                className="h-10 px-4 rounded-lg border border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50 transition-colors font-medium text-xs cursor-pointer"
               >
                 Reset
               </button>
@@ -312,7 +320,7 @@ function ExitForm() {
 
 export default function ExitGatePage() {
   return (
-    <Suspense fallback={<div className="dash-loading"><Loader2 size={24} className="spin" /><p>Loading exit kiosk…</p></div>}>
+    <Suspense fallback={<div className="min-h-[300px] flex flex-col items-center justify-center gap-3 text-neutral-400 text-sm"><Loader2 size={24} className="animate-spin text-emerald-700" /><p>Loading exit kiosk…</p></div>}>
       <ExitForm />
     </Suspense>
   );

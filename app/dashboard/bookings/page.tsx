@@ -86,36 +86,43 @@ export default function BookingsListPage() {
   return (
     <div>
       {/* Header */}
-      <div className="dash-page-header-row mb-6">
-        <div className="dash-page-header !mb-0">
-          <h1>Facility Bookings & Sessions</h1>
-          <p>Complete historical and live registry of vehicle sessions</p>
+      <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-800 tracking-tight m-0">Facility Bookings & Sessions</h1>
+          <p className="text-neutral-500 text-xs sm:text-sm mt-1 mb-0">Complete historical and live registry of vehicle sessions</p>
         </div>
 
         <button
           onClick={loadBookings}
           disabled={refreshing}
-          className="dash-filter-tab flex items-center gap-1.5"
+          className="px-3.5 py-1.5 border border-neutral-300 rounded-md bg-white text-neutral-600 text-xs font-medium cursor-pointer hover:bg-neutral-50 transition-colors flex items-center gap-1.5"
         >
-          <RefreshCw size={13} className={refreshing ? "spin" : ""} />
+          <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
           <span>{refreshing ? "Refreshing…" : "Refresh"}</span>
         </button>
       </div>
 
       {/* Control panel: status tabs & search */}
-      <div className="dash-panel mb-6 !p-4">
+      <div className="bg-white border border-neutral-200 rounded-xl p-4 mb-6 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Status Tabs */}
-          <div className="dash-filter-tabs !mb-0">
-            {["ALL", "ACTIVE", "PENDING", "COMPLETED", "CANCELLED"].map((st) => (
-              <button
-                key={st}
-                onClick={() => setStatusFilter(st)}
-                className={`dash-filter-tab ${statusFilter === st ? "active" : ""}`}
-              >
-                {st === "ALL" ? "All Bookings" : st.charAt(0) + st.slice(1).toLowerCase()}
-              </button>
-            ))}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {["ALL", "ACTIVE", "PENDING", "COMPLETED", "CANCELLED"].map((st) => {
+              const active = statusFilter === st;
+              return (
+                <button
+                  key={st}
+                  onClick={() => setStatusFilter(st)}
+                  className={`px-3 py-1.5 border rounded-md text-xs font-medium cursor-pointer transition-colors ${
+                    active
+                      ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold"
+                      : "border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50"
+                  }`}
+                >
+                  {st === "ALL" ? "All Bookings" : st.charAt(0) + st.slice(1).toLowerCase()}
+                </button>
+              );
+            })}
           </div>
 
           {/* Search & Overstay Toggle */}
@@ -147,37 +154,37 @@ export default function BookingsListPage() {
       </div>
 
       {/* Bookings Table */}
-      <div className="dash-panel">
-        <div className="dash-panel-header">
+      <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="dash-panel-title">Records ({filteredBookings.length})</h3>
-            <p className="dash-panel-subtitle">Sorted by most recent entry/booking creation</p>
+            <h3 className="text-[15px] font-semibold text-neutral-800 m-0">Records ({filteredBookings.length})</h3>
+            <p className="text-[11px] text-neutral-500 mt-0.5 m-0">Sorted by most recent entry/booking creation</p>
           </div>
         </div>
 
         {loading ? (
-          <div className="dash-empty py-12">
-            <Loader2 size={24} className="spin text-neutral-400 mb-2" />
-            <p>Loading bookings…</p>
+          <div className="text-center py-12 px-6 text-neutral-400">
+            <Loader2 size={24} className="animate-spin text-neutral-400 mb-2 mx-auto" />
+            <p className="text-xs">Loading bookings…</p>
           </div>
         ) : filteredBookings.length === 0 ? (
-          <div className="dash-empty py-12">
-            <CarFront size={32} />
-            <h3>No Bookings Found</h3>
-            <p>No parking session records match the active filters or search criteria.</p>
+          <div className="text-center py-12 px-6 text-neutral-400">
+            <CarFront size={32} className="mx-auto mb-3 text-neutral-300" />
+            <h3 className="m-0 mb-1.5 text-neutral-600 text-[15px] font-semibold">No Bookings Found</h3>
+            <p className="m-0 text-[13px] text-neutral-500">No parking session records match the active filters or search criteria.</p>
           </div>
         ) : (
-          <div className="dash-table-wrapper">
-            <table className="dash-table">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr>
-                  <th>Vehicle Plate</th>
-                  <th>Assigned Slot</th>
-                  <th>Entry Time</th>
-                  <th>Expected Exit</th>
-                  <th>Hourly Rate</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Vehicle Plate</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Assigned Slot</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Entry Time</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Expected Exit</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Hourly Rate</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Status</th>
+                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Actions</th>
                 </tr>
               </thead>
               <tbody>

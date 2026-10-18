@@ -36,8 +36,8 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
 
   if (loading) {
     return (
-      <main className="dash-loading">
-        <Loader2 size={32} className="spin" />
+      <main className="min-h-screen flex flex-col items-center justify-center gap-3 text-neutral-400 text-sm">
+        <Loader2 size={32} className="animate-spin text-emerald-700" />
         <p>Loading member portal…</p>
       </main>
     );

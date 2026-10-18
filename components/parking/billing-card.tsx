@@ -52,7 +52,7 @@ export function BillingCard({
   };
 
   return (
-    <div className="dash-result-card print:border-none print:shadow-none">
+    <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-5 mt-4 print:border-none print:shadow-none">
       <div className="flex items-center justify-between pb-3 border-b border-emerald-200 mb-4">
         <div className="flex items-center gap-2">
           <CheckCircle2 size={22} className="text-emerald-700" />
@@ -69,7 +69,7 @@ export function BillingCard({
         </button>
       </div>
 
-      <dl className="dash-result-detail mb-4">
+      <dl className="grid grid-cols-[140px_1fr] gap-x-3 gap-y-1.5 text-[13px] mb-4 [&>dt]:text-neutral-500 [&>dt]:font-medium [&>dd]:text-neutral-800 [&>dd]:font-semibold [&>dd]:m-0">
         <dt>Vehicle Plate:</dt>
         <dd className="font-mono text-sm tracking-wide">{licensePlate}</dd>
 
@@ -107,22 +107,22 @@ export function BillingCard({
       </dl>
 
       {/* Breakdown Grid */}
-      <div className="billing-grid">
-        <div className="billing-item">
-          <div className="billing-label">Base Parking Fee</div>
-          <div className="billing-value">₹{(billing.baseFee ?? (billing.baseFeePaise ? billing.baseFeePaise / 100 : 0)).toFixed(2)}</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-3">
+        <div className="bg-white border border-neutral-200 rounded-lg p-3 shadow-xs">
+          <div className="text-[10px] text-neutral-400 uppercase tracking-wider font-medium">Base Parking Fee</div>
+          <div className="text-xl font-bold text-neutral-800 mt-0.5">₹{(billing.baseFee ?? (billing.baseFeePaise ? billing.baseFeePaise / 100 : 0)).toFixed(2)}</div>
         </div>
 
-        <div className="billing-item">
-          <div className="billing-label">Overstay Penalty</div>
-          <div className={`billing-value ${(billing.penaltyFee ?? 0) > 0 ? "penalty" : ""}`}>
+        <div className="bg-white border border-neutral-200 rounded-lg p-3 shadow-xs">
+          <div className="text-[10px] text-neutral-400 uppercase tracking-wider font-medium">Overstay Penalty</div>
+          <div className={`text-xl font-bold mt-0.5 ${(billing.penaltyFee ?? 0) > 0 ? "text-red-600" : "text-neutral-800"}`}>
             ₹{(billing.penaltyFee ?? (billing.penaltyFeePaise ? billing.penaltyFeePaise / 100 : 0)).toFixed(2)}
           </div>
         </div>
 
-        <div className="billing-item billing-total">
-          <div className="billing-label font-bold text-emerald-800">Total Settlement Due</div>
-          <div className="billing-value total">
+        <div className="col-span-1 sm:col-span-2 bg-emerald-50/90 border border-emerald-200 rounded-lg p-3 shadow-xs">
+          <div className="text-[10px] uppercase tracking-wider font-bold text-emerald-800">Total Settlement Due</div>
+          <div className="text-xl font-bold text-emerald-700 mt-0.5">
             ₹{(billing.totalDue ?? (billing.totalDuePaise ? billing.totalDuePaise / 100 : 0)).toFixed(2)}
           </div>
         </div>
@@ -168,7 +168,7 @@ export function BillingCard({
           <button
             type="button"
             onClick={onDone}
-            className="dash-form-submit"
+            className="inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
           >
             Process Next Vehicle
           </button>

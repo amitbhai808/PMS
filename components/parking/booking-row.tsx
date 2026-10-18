@@ -63,16 +63,37 @@ export function BookingRow({ booking, onCancel }: BookingRowProps) {
     return `₹${(paise / 100).toFixed(2)}`;
   };
 
+  const getStatusBadge = (val: string) => {
+    switch (val.toUpperCase()) {
+      case "ACTIVE":
+      case "AVAILABLE":
+      case "PAID":
+        return "bg-emerald-50 text-emerald-700 border-emerald-200";
+      case "PENDING":
+        return "bg-amber-50 text-amber-700 border-amber-200";
+      case "COMPLETED":
+        return "bg-blue-50 text-blue-700 border-blue-200";
+      case "OCCUPIED":
+      case "OVERDUE":
+      case "UNPAID":
+        return "bg-red-50 text-red-700 border-red-200";
+      case "MAINTENANCE":
+      case "CANCELLED":
+      default:
+        return "bg-neutral-100 text-neutral-600 border-neutral-200";
+    }
+  };
+
   return (
-    <tr className={isOverdue ? "overstay-row" : ""}>
+    <tr className={`border-b border-neutral-100 transition-colors ${isOverdue ? "bg-red-50/70 hover:bg-red-50" : "hover:bg-neutral-50/80"}`}>
       {/* Plate & Type */}
-      <td>
+      <td className="p-2.5 sm:px-3 sm:py-2.5 align-middle">
         <div className="flex items-center gap-2">
           <span className="font-mono font-bold tracking-wider text-sm px-2 py-0.5 rounded bg-neutral-100 border border-neutral-300">
             {booking.licensePlate}
           </span>
           {booking.vehicle && (
-            <span className="text-[10px] text-neutral-500 uppercase tracking-tight">
+            <span className="text-[10px] text-neutral-500 uppercase tracking-tight font-medium">
               {booking.vehicle.type.replace("_", " ")}
             </span>
           )}
@@ -80,7 +101,7 @@ export function BookingRow({ booking, onCancel }: BookingRowProps) {
       </td>
 
       {/* Slot & Zone */}
-      <td>
+      <td className="p-2.5 sm:px-3 sm:py-2.5 align-middle">
         {booking.slot ? (
           <div>
             <span className="font-bold text-neutral-800 text-xs px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
@@ -96,7 +117,7 @@ export function BookingRow({ booking, onCancel }: BookingRowProps) {
       </td>
 
       {/* Entry */}
-      <td>
+      <td className="p-2.5 sm:px-3 sm:py-2.5 align-middle">
         <div className="text-xs">
           <span className="font-medium text-neutral-800">
             {formatDate(booking.actualEntry ?? booking.expectedEntry)}
@@ -108,7 +129,7 @@ export function BookingRow({ booking, onCancel }: BookingRowProps) {
       </td>
 
       {/* Exit & Overstay */}
-      <td>
+      <td className="p-2.5 sm:px-3 sm:py-2.5 align-middle">
         <div className="text-xs">
           <span className="font-medium text-neutral-800">
             {formatDate(booking.actualExit ?? booking.expectedExit)}
@@ -124,7 +145,7 @@ export function BookingRow({ booking, onCancel }: BookingRowProps) {
       </td>
 
       {/* Rate */}
-      <td>
+      <td className="p-2.5 sm:px-3 sm:py-2.5 align-middle">
         <div className="text-xs font-semibold text-neutral-700">
           {formatCurrency(booking.hourlyRatePaise)}/hr
         </div>
@@ -136,19 +157,19 @@ export function BookingRow({ booking, onCancel }: BookingRowProps) {
       </td>
 
       {/* Status */}
-      <td>
+      <td className="p-2.5 sm:px-3 sm:py-2.5 align-middle">
         <div className="flex flex-col gap-1 items-start">
-          <span className={`status-badge ${booking.status.toLowerCase()}`}>
+          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase border ${getStatusBadge(booking.status)}`}>
             {booking.status}
           </span>
-          <span className={`status-badge ${booking.paymentStatus.toLowerCase()} !text-[9px] !py-0.5`}>
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-wide uppercase border ${getStatusBadge(booking.paymentStatus)}`}>
             {booking.paymentStatus}
           </span>
         </div>
       </td>
 
       {/* Quick Actions */}
-      <td>
+      <td className="p-2.5 sm:px-3 sm:py-2.5 align-middle">
         <div className="flex items-center gap-1.5">
           {booking.status === "ACTIVE" && (
             <>

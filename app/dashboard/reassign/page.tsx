@@ -117,13 +117,13 @@ function ReassignForm() {
 
   return (
     <div className="max-w-2xl">
-      <div className="dash-page-header">
-        <h1>Manual Bay Reassignment</h1>
-        <p>Transfer an active parked vehicle to a different available parking bay</p>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold tracking-tight text-neutral-900">Manual Bay Reassignment</h1>
+        <p className="text-xs text-neutral-500 mt-1">Transfer an active parked vehicle to a different available parking bay</p>
       </div>
 
       {result ? (
-        <div className="dash-result-card animate-in fade-in zoom-in-95 duration-150">
+        <div className="bg-emerald-50/50 border border-emerald-200 rounded-xl p-5 mb-6 shadow-xs animate-in fade-in zoom-in-95 duration-150">
           <div className="flex items-center gap-2 pb-3 border-b border-emerald-200 mb-4">
             <CheckCircle2 size={22} className="text-emerald-700" />
             <h3 className="!m-0 text-base font-bold text-emerald-800">
@@ -147,7 +147,7 @@ function ReassignForm() {
             </div>
           </div>
 
-          <dl className="dash-result-detail text-sm mb-5">
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm mb-5 [&>dt]:font-medium [&>dt]:text-neutral-500 [&>dd]:text-neutral-900 [&>dd]:m-0">
             <dt>Vehicle Plate:</dt>
             <dd className="font-mono text-base">{result.plate}</dd>
 
@@ -162,14 +162,14 @@ function ReassignForm() {
             <button
               type="button"
               onClick={handleReset}
-              className="dash-form-submit"
+              className="inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
             >
               Reassign Another Vehicle
             </button>
           </div>
         </div>
       ) : (
-        <div className="dash-panel">
+        <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
           {error && (
             <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2">
               <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
@@ -177,7 +177,7 @@ function ReassignForm() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="dash-form">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Booking to reassign */}
             <div>
               <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
@@ -186,7 +186,7 @@ function ReassignForm() {
 
               {loading ? (
                 <div className="p-3 text-xs text-neutral-500 flex items-center gap-2">
-                  <Loader2 size={16} className="spin" /> Loading active sessions…
+                  <Loader2 size={16} className="animate-spin" /> Loading active sessions…
                 </div>
               ) : activeBookings.length === 0 ? (
                 <div className="p-3 rounded-lg bg-neutral-50 text-xs text-neutral-500 border border-neutral-200">
@@ -249,19 +249,19 @@ function ReassignForm() {
             </div>
 
             {/* Actions */}
-            <div className="dash-form-actions pt-2">
+            <div className="flex items-center gap-3 pt-2">
               <button
                 type="submit"
                 disabled={submitting || !bookingId || !targetSlotCode}
-                className="dash-form-submit flex-1"
+                className="flex-1 inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
               >
-                {submitting ? <Loader2 size={16} className="spin" /> : <ArrowRightLeft size={16} />}
+                {submitting ? <Loader2 size={16} className="animate-spin" /> : <ArrowRightLeft size={16} />}
                 <span>{submitting ? "Moving Vehicle…" : "Confirm Bay Reassignment"}</span>
               </button>
               <button
                 type="button"
                 onClick={handleReset}
-                className="dash-form-reset"
+                className="h-10 px-4 rounded-lg border border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50 transition-colors font-medium text-xs cursor-pointer"
               >
                 Reset
               </button>
@@ -275,7 +275,7 @@ function ReassignForm() {
 
 export default function ReassignPage() {
   return (
-    <Suspense fallback={<div className="dash-loading"><Loader2 size={24} className="spin" /><p>Loading form…</p></div>}>
+    <Suspense fallback={<div className="min-h-[300px] flex flex-col items-center justify-center gap-3 text-neutral-400 text-sm"><Loader2 size={24} className="animate-spin text-emerald-700" /><p>Loading form…</p></div>}>
       <ReassignForm />
     </Suspense>
   );

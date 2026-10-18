@@ -42,26 +42,26 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="login-page">
-      <div className="login-card">
-        <div className="login-brand">
-          <span className="login-brand-mark">
+    <main className="min-h-screen grid place-items-center bg-gradient-to-br from-[#f0f5f2] via-[#e8ede9] to-[#f5f7f5] p-6">
+      <div className="w-full max-w-[420px] bg-white border border-neutral-200 rounded-2xl p-8 sm:p-9 shadow-xl shadow-emerald-950/5">
+        <div className="flex items-center gap-3 mb-7">
+          <span className="w-10 h-10 rounded-xl text-white grid place-items-center bg-emerald-700 shadow-md shadow-emerald-700/20 shrink-0">
             <CarFront size={22} />
           </span>
           <div>
-            <strong>Parkwise</strong>
-            <small>SMART PARKING</small>
+            <strong className="block text-lg font-bold tracking-tight text-neutral-800 leading-tight">Parkwise</strong>
+            <small className="block text-neutral-400 font-bold tracking-[1.45px] text-[8px] mt-0.5">SMART PARKING</small>
           </div>
         </div>
 
-        <h1>Create your account</h1>
-        <p className="login-subtitle">Sign up as a member to reserve slots and manage your vehicles</p>
+        <h1 className="m-0 mb-1.5 text-xl font-bold text-neutral-900 tracking-tight">Create your account</h1>
+        <p className="m-0 mb-5 text-neutral-500 text-[13px] leading-relaxed">Sign up as a member to reserve slots and manage your vehicles</p>
 
-        {error && <div className="login-error">{error}</div>}
+        {error && <div className="p-3 px-3.5 mb-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-[13px] font-medium">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-field">
-            <label htmlFor="register-name">Full name</label>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="register-name" className="text-xs font-semibold text-neutral-700">Full name</label>
             <input
               id="register-name"
               type="text"
@@ -72,11 +72,12 @@ export default function RegisterPage() {
               minLength={2}
               maxLength={80}
               autoFocus
+              className="h-10 px-3 border border-neutral-300 rounded-lg text-sm text-neutral-900 bg-white transition-all duration-150 outline-none focus:border-emerald-700 focus:ring-3 focus:ring-emerald-700/10 placeholder:text-neutral-400"
             />
           </div>
 
-          <div className="form-field">
-            <label htmlFor="register-email">Email address</label>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="register-email" className="text-xs font-semibold text-neutral-700">Email address</label>
             <input
               id="register-email"
               type="email"
@@ -85,11 +86,14 @@ export default function RegisterPage() {
               placeholder="asha@example.com"
               required
               autoComplete="email"
+              className="h-10 px-3 border border-neutral-300 rounded-lg text-sm text-neutral-900 bg-white transition-all duration-150 outline-none focus:border-emerald-700 focus:ring-3 focus:ring-emerald-700/10 placeholder:text-neutral-400"
             />
           </div>
 
-          <div className="form-field">
-            <label htmlFor="register-phone">Phone number <span className="optional">(optional)</span></label>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="register-phone" className="text-xs font-semibold text-neutral-700">
+              Phone number <span className="font-normal text-neutral-400">(optional)</span>
+            </label>
             <input
               id="register-phone"
               type="tel"
@@ -98,12 +102,15 @@ export default function RegisterPage() {
               placeholder="+91 98765 43210"
               minLength={8}
               maxLength={20}
+              className="h-10 px-3 border border-neutral-300 rounded-lg text-sm text-neutral-900 bg-white transition-all duration-150 outline-none focus:border-emerald-700 focus:ring-3 focus:ring-emerald-700/10 placeholder:text-neutral-400"
             />
           </div>
 
-          <div className="form-field">
-            <label htmlFor="register-password">Password <span className="optional">(min 12 characters)</span></label>
-            <div className="password-wrapper">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="register-password" className="text-xs font-semibold text-neutral-700">
+              Password <span className="font-normal text-neutral-400">(min 12 characters)</span>
+            </label>
+            <div className="relative">
               <input
                 id="register-password"
                 type={showPassword ? "text" : "password"}
@@ -114,10 +121,11 @@ export default function RegisterPage() {
                 minLength={12}
                 maxLength={128}
                 autoComplete="new-password"
+                className="h-10 w-full pl-3 pr-10 border border-neutral-300 rounded-lg text-sm text-neutral-900 bg-white transition-all duration-150 outline-none focus:border-emerald-700 focus:ring-3 focus:ring-emerald-700/10 placeholder:text-neutral-400"
               />
               <button
                 type="button"
-                className="password-toggle"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-1.5 rounded transition-colors"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
@@ -126,15 +134,19 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <button type="submit" className="login-submit" disabled={loading}>
-            {loading ? <Loader2 size={16} className="spin" /> : <UserPlus size={16} />}
+          <button
+            type="submit"
+            className="flex items-center justify-center gap-2 h-10.5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-colors mt-1 cursor-pointer"
+            disabled={loading}
+          >
+            {loading ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
             {loading ? "Creating account…" : "Create account"}
           </button>
         </form>
 
-        <p className="login-footer-text">
+        <p className="text-center mt-5 text-neutral-500 text-[13px]">
           Already have an account?{" "}
-          <Link href="/login" className="login-link">Sign in</Link>
+          <Link href="/login" className="text-emerald-700 hover:text-emerald-800 font-semibold hover:underline">Sign in</Link>
         </p>
       </div>
     </main>

@@ -14,6 +14,21 @@ function createPrismaClient() {
   });
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+function getPrismaClient() {
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = createPrismaClient();
+  }
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+  return globalForPrisma.prisma;
+}
+
+// Route modules are evaluated during `next build`, when Vercel does not expose
+// runtime secrets. Create the client on its first request instead of at module
+// import time so builds do not require DATABASE_URL or JWT_SECRET.
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, property) {
+    const client = getPrismaClient();
+    const value = Reflect.get(client, property, client);
+    return typeof value === "function" ? value.bind(client) : value;
+  },
+});

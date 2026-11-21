@@ -1,0 +1,16 @@
+services:
+  pms-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pms_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    volumes:
+      - ./data:/app/data

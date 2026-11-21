@@ -51,6 +51,34 @@ body { margin: 0; background: var(--canvas); color: var(--ink); font-family: Int
 a { color: inherit; text-decoration: none; }
 
 @theme inline {
+
+  /* Brand palette */
+  --color-pine-50: #DAF1DE;
+  --color-pine-300: #8EB69B;
+  --color-pine-600: #235347;
+  --color-pine-700: #163B32;
+  --color-pine-900: #0B2B26;
+  --color-pine-950: #051F20;
+
+  /* Shared operations dashboard tokens. Use these semantic names in UI components. */
+  --color-ops-canvas: #F4F8F5;
+  --color-ops-surface: #FFFFFF;
+  --color-ops-border: #DCE9DF;
+  --color-ops-ink: #163B32;
+  --color-ops-muted: #658276;
+  --color-ops-primary: #00845F;
+  --color-ops-primary-hover: #006D51;
+  --color-ops-primary-soft: #EFFCF7;
+  --color-status-danger: #B9382B;
+  --color-status-danger-soft: #FFF1F0;
+  --color-status-warning: #A96800;
+  --color-status-warning-soft: #FFF8E7;
+  --color-status-info: #2563A9;
+  --color-status-info-soft: #EFF6FF;
+  --color-status-success: #00845F;
+  --color-status-success-soft: #EFFCF7;
+
+
   --font-heading: var(--font-sans);
   --font-sans: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -136,5 +164,25 @@ a { color: inherit; text-decoration: none; }
   }
   html {
     @apply font-sans;
+  }
+}
+
+
+/* app/globals.css */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #printable-ticket,
+  #printable-ticket * {
+    visibility: visible;
+  }
+
+  #printable-ticket {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
   }
 }

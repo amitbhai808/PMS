@@ -1,206 +1,24 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  AlertTriangle,
-  RefreshCw,
-  DoorClosed,
-  ArrowRightLeft,
-  CheckCircle2,
-  Clock,
-  CarFront,
-  Loader2,
-} from "lucide-react";
+import { AlertTriangle, ArrowRightLeft, CheckCircle2, Clock3, DoorClosed, Loader2, RefreshCw } from "lucide-react";
 import { apiGet } from "@/lib/client-api";
-import { Booking } from "@/components/parking/booking-row";
+import type { Booking } from "@/components/parking/booking-row";
 import { OverstayBadge } from "@/components/parking/overstay-badge";
+import { OperatorCard, OperatorPageHeader } from "@/components/admin_dashboards/operator-ui";
 
 export default function OverstayAlertsPage() {
-  const [overstayBookings, setOverstayBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [lastCheck, setLastCheck] = useState<Date>(new Date());
+  const [overstays, setOverstays] = useState<Booking[]>([]); const [loading, setLoading] = useState(true); const [refreshing, setRefreshing] = useState(false); const [lastCheck, setLastCheck] = useState(new Date());
+  const loadOverstays = useCallback(async () => { setRefreshing(true); const response = await apiGet<{ bookings: Booking[] }>("/api/bookings/overstay"); if (response.ok) setOverstays(response.data.bookings); setLastCheck(new Date()); setLoading(false); setRefreshing(false); }, []);
+  useEffect(() => { void loadOverstays(); const timer = window.setInterval(() => void loadOverstays(), 30_000); return () => window.clearInterval(timer); }, [loadOverstays]);
 
-  const loadOverstays = useCallback(async () => {
-    setRefreshing(true);
-    const res = await apiGet<{ bookings: Booking[] }>("/api/bookings/overstay");
-    if (res.ok) {
-      setOverstayBookings(res.data.bookings);
-    }
-    setLastCheck(new Date());
-    setLoading(false);
-    setRefreshing(false);
-  }, []);
-
-  useEffect(() => {
-    loadOverstays();
-    // Re-check every 30 seconds
-    const interval = setInterval(loadOverstays, 30_000);
-    return () => clearInterval(interval);
-  }, [loadOverstays]);
-
-  return (
-    <div>
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-neutral-900">Overstay & Violation Watch</h1>
-            {overstayBookings.length > 0 && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-300">
-                {overstayBookings.length} Alert{overstayBookings.length === 1 ? "" : "s"}
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-neutral-500 mt-1">Real-time monitor of active parked vehicles that have exceeded their expected exit times</p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-neutral-400 flex items-center gap-1">
-            <Clock size={13} /> {lastCheck.toLocaleTimeString()}
-          </span>
-          <button
-            onClick={loadOverstays}
-            disabled={refreshing}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-neutral-200 bg-white text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 transition-colors cursor-pointer"
-          >
-            <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
-            <span>{refreshing ? "Checking…" : "Check Overstays"}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Overview Banner */}
-      <div className="bg-gradient-to-r from-red-50/60 to-white border border-red-200/70 rounded-xl p-4 mb-6 shadow-xs">
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0 text-red-700">
-            <AlertTriangle size={20} />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-red-900 mb-1">
-              Automated Overstay Penalty Policy Active
-            </h3>
-            <p className="text-xs text-red-800/80 leading-relaxed">
-              Vehicles parked beyond their scheduled departure incur incremental overtime surcharge rate
-              (1.5x base hourly tier) computed down to the minute upon departure. Operators can dispatch
-              bay checks or assist drivers at the exit gate.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Overstay Records Table */}
-      <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
-          <div>
-            <h3 className="text-sm font-bold text-neutral-900">Vehicles Past Expected Departure</h3>
-            <p className="text-xs text-neutral-500 mt-0.5">Sorted by longest overdue first</p>
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="text-center py-12 px-6 text-neutral-400 flex flex-col items-center justify-center">
-            <Loader2 size={24} className="animate-spin text-neutral-400 mb-2" />
-            <p className="text-xs text-neutral-500">Scanning facility bays for overstays…</p>
-          </div>
-        ) : overstayBookings.length === 0 ? (
-          <div className="text-center py-14 px-6 text-neutral-400 flex flex-col items-center justify-center">
-            <CheckCircle2 size={36} className="text-emerald-600 mb-2" />
-            <h3 className="text-sm font-semibold text-neutral-800 mt-2 mb-1">Zero Overstay Violations</h3>
-            <p className="text-xs text-neutral-500">All vehicles currently parked inside the facility are within their permitted parking windows.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-xs">
-              <thead>
-                <tr>
-                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Vehicle Plate</th>
-                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Bay Location</th>
-                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Scheduled Departure</th>
-                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Overdue Duration</th>
-                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Base Rate</th>
-                  <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Gate Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-100">
-                {overstayBookings.map((b) => (
-                  <tr key={b.id} className="bg-red-50/40 hover:bg-red-50/70 transition-colors">
-                    <td className="p-2.5 sm:px-3 align-middle">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold tracking-wider text-sm px-2 py-0.5 rounded bg-white border border-red-200 text-red-900 shadow-2xs">
-                          {b.licensePlate}
-                        </span>
-                        {b.vehicle && (
-                          <span className="text-[10px] text-neutral-500 uppercase">
-                            {b.vehicle.type.replace("_", " ")}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
-                    <td className="p-2.5 sm:px-3 align-middle">
-                      <span className="font-bold text-xs px-2 py-0.5 rounded bg-white border border-neutral-200">
-                        {b.slot?.code ?? "—"}
-                      </span>
-                      <div className="text-[11px] text-neutral-500 mt-0.5">
-                        {b.slot?.zone?.name ?? `Level ${b.slot?.zone?.level ?? 0}`}
-                      </div>
-                    </td>
-
-                    <td className="p-2.5 sm:px-3 align-middle">
-                      <div className="text-xs">
-                        <span className="font-medium text-neutral-800">
-                          {new Date(b.expectedExit).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                        <div className="text-[10px] text-neutral-400">
-                          {new Date(b.expectedExit).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="p-2.5 sm:px-3 align-middle">
-                      <OverstayBadge
-                        expectedExit={b.expectedExit}
-                        actualExit={b.actualExit}
-                        status={b.status}
-                      />
-                    </td>
-
-                    <td className="p-2.5 sm:px-3 align-middle">
-                      <div className="text-xs font-semibold text-neutral-700">
-                        ₹{(b.hourlyRatePaise / 100).toFixed(2)}/hr
-                      </div>
-                      <div className="text-[10px] text-red-600 font-semibold">
-                        +1.5x Overtime Tier
-                      </div>
-                    </td>
-
-                    <td className="p-2.5 sm:px-3 align-middle">
-                      <div className="flex items-center gap-2">
-                        <Link
-                          href={`/dashboard/exit?plate=${encodeURIComponent(b.licensePlate)}`}
-                          className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded bg-red-700 text-white hover:bg-red-800 transition-colors"
-                          title="Process exit & collect overdue penalty"
-                        >
-                          <DoorClosed size={13} /> Settle Exit
-                        </Link>
-                        <Link
-                          href={`/dashboard/reassign?bookingId=${encodeURIComponent(b.id)}`}
-                          className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded border border-neutral-300 text-neutral-700 hover:bg-neutral-100 transition-colors bg-white"
-                          title="Reassign to another bay"
-                        >
-                          <ArrowRightLeft size={13} />
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  const refreshButton = <button type="button" onClick={() => void loadOverstays()} disabled={refreshing} className="inline-flex items-center gap-2 rounded-xl border border-ops-border bg-white px-4 py-2.5 text-sm font-semibold text-ops-muted transition hover:bg-ops-canvas hover:text-ops-ink disabled:opacity-70"><RefreshCw className={`size-4 ${refreshing ? "animate-spin" : ""}`} />{refreshing ? "Checking…" : "Refresh watch"}</button>;
+  return <div className="max-w-6xl">
+    <OperatorPageHeader eyebrow="Live monitor" title="Overstay watch" description="Live view of active vehicles past their expected departure time." icon={AlertTriangle} action={refreshButton} />
+    <section className="mb-6 rounded-2xl border border-status-danger/25 bg-status-danger-soft p-5 shadow-[0_10px_30px_rgba(22,59,50,0.04)]"><div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-status-danger text-white"><AlertTriangle className="size-5" /></span><div><h2 className="m-0 text-base font-bold text-ops-ink">Overstay penalty policy active</h2><p className="mt-1 max-w-2xl text-sm text-ops-muted">Operators can settle an exit or reassign a vehicle when a current session has passed its planned departure.</p></div></div><div className="flex items-center gap-2 text-xs font-semibold text-status-danger"><span className="size-2 rounded-full bg-status-danger" />{overstays.length} current {overstays.length === 1 ? "alert" : "alerts"}</div></div></section>
+    <OperatorCard className="p-0 overflow-hidden"><div className="flex flex-col gap-3 border-b border-ops-border px-5 py-5 sm:flex-row sm:items-center sm:justify-between md:px-6"><div><h2 className="m-0 text-lg font-bold text-ops-ink">Vehicles past expected departure</h2><p className="mt-1 text-sm text-ops-muted">Updates automatically every 30 seconds. Last checked {lastCheck.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}.</p></div><span className="inline-flex items-center gap-1.5 text-xs font-medium text-ops-muted"><Clock3 className="size-3.5" /> Active facility monitor</span></div>
+      {loading ? <div className="flex min-h-72 flex-col items-center justify-center gap-3 text-sm text-ops-muted"><Loader2 className="size-6 animate-spin text-ops-primary" />Scanning active sessions…</div> : overstays.length === 0 ? <div className="flex min-h-72 flex-col items-center justify-center px-6 text-center"><CheckCircle2 className="size-10 text-status-success" /><h3 className="mb-1 mt-3 text-base font-bold text-ops-ink">No current overstays</h3><p className="max-w-md text-sm text-ops-muted">All active vehicles are within their expected parking windows.</p></div> : <div className="overflow-x-auto"><table className="w-full min-w-[850px] border-collapse text-left text-sm"><thead className="bg-ops-canvas text-[10px] uppercase tracking-wider text-ops-muted"><tr><th className="px-5 py-3 font-bold">Vehicle</th><th className="px-5 py-3 font-bold">Bay</th><th className="px-5 py-3 font-bold">Scheduled exit</th><th className="px-5 py-3 font-bold">Overdue</th><th className="px-5 py-3 font-bold">Rate</th><th className="px-5 py-3 text-right font-bold">Actions</th></tr></thead><tbody className="divide-y divide-ops-border">{overstays.map((booking) => <tr key={booking.id} className="transition hover:bg-status-danger-soft/60"><td className="px-5 py-4"><span className="rounded-md border border-status-danger/25 bg-white px-2 py-1 font-mono text-sm font-bold text-ops-ink">{booking.licensePlate}</span><span className="ml-2 text-[11px] uppercase text-ops-muted">{booking.vehicle?.type.replace("_", " ")}</span></td><td className="px-5 py-4"><strong className="font-mono text-ops-ink">{booking.slot?.code ?? "—"}</strong><span className="mt-0.5 block text-xs text-ops-muted">{booking.slot?.zone?.name ?? `Level ${booking.slot?.zone?.level ?? 0}`}</span></td><td className="px-5 py-4 font-medium text-ops-ink">{new Date(booking.expectedExit).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}<span className="mt-0.5 block text-xs font-normal text-ops-muted">{new Date(booking.expectedExit).toLocaleDateString([], { month: "short", day: "numeric" })}</span></td><td className="px-5 py-4"><OverstayBadge expectedExit={booking.expectedExit} actualExit={booking.actualExit} status={booking.status} /></td><td className="px-5 py-4"><strong className="text-ops-ink">₹{(booking.hourlyRatePaise / 100).toFixed(2)}/hr</strong><span className="mt-0.5 block text-xs font-semibold text-status-danger">Overtime applies at exit</span></td><td className="px-5 py-4"><div className="flex justify-end gap-2"><Link href={`/dashboard/reassign?bookingId=${encodeURIComponent(booking.id)}`} className="inline-flex items-center gap-1.5 rounded-lg border border-status-info/30 bg-status-info-soft px-3 py-2 text-xs font-bold text-status-info transition hover:border-status-info"><ArrowRightLeft className="size-3.5" /> Reassign</Link><Link href={`/dashboard/exit?plate=${encodeURIComponent(booking.licensePlate)}`} className="inline-flex items-center gap-1.5 rounded-lg bg-status-danger px-3 py-2 text-xs font-bold text-white transition hover:bg-[#922C21]"><DoorClosed className="size-3.5" /> Settle exit</Link></div></td></tr>)}</tbody></table></div>}
+    </OperatorCard>
+  </div>;
 }

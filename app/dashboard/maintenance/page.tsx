@@ -1,245 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  Wrench,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  Layers3,
-  Search,
-  Check,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, CheckCircle2, Loader2, Search, Wrench } from "lucide-react";
 import { apiGet, apiPost } from "@/lib/client-api";
 import { useToast } from "@/components/toast";
-import { Slot } from "@/components/parking/slot-card";
+import type { Slot } from "@/components/parking/slot-card";
+import { FormError, OperatorCard, OperatorPageHeader } from "@/components/admin_dashboards/operator-ui";
 
 export default function MaintenancePage() {
-  const [slots, setSlots] = useState<Slot[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [slotCode, setSlotCode] = useState("");
-  const [reason, setReason] = useState("");
-  const [searchFilter, setSearchFilter] = useState("");
-
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-
   const { toast } = useToast();
+  const [slots, setSlots] = useState<Slot[]>([]); const [loading, setLoading] = useState(true);
+  const [slotCode, setSlotCode] = useState(""); const [reason, setReason] = useState(""); const [searchFilter, setSearchFilter] = useState("");
+  const [submitting, setSubmitting] = useState(false); const [releasing, setReleasing] = useState<string | null>(null); const [error, setError] = useState("");
+  const loadSlots = async () => { setLoading(true); const response = await apiGet<{ slots: Slot[] }>("/api/slots?includeShadow=true"); if (response.ok) setSlots(response.data.slots); setLoading(false); };
+  useEffect(() => { void loadSlots(); }, []);
+  const maintenanceSlots = slots.filter((slot) => slot.status === "MAINTENANCE");
+  const availableSlots = slots.filter((slot) => slot.status === "AVAILABLE" && slot.code.toLowerCase().includes(searchFilter.toLowerCase().trim()));
+  const submit = async (event: React.FormEvent) => { event.preventDefault(); if (!slotCode) { setError("Select an available bay to take out of service."); return; } if (reason.trim().length < 4) { setError("Describe the maintenance work with at least 4 characters."); return; } setError(""); setSubmitting(true); const response = await apiPost<{ slot: Slot }>("/api/operator/mark-maintenance", { slotCode, reason: reason.trim() }); setSubmitting(false); if (!response.ok) { setError(response.error); return; } toast(`Bay ${slotCode} flagged for maintenance`, "success"); setSlotCode(""); setReason(""); await loadSlots(); };
+  const reopen = async (code: string) => { setReleasing(code); const response = await apiPost<{ slot: Slot }>("/api/operator/override", { slotCode: code, status: "AVAILABLE", reason: "Maintenance completed; inspected and reopened for parking" }); setReleasing(null); if (!response.ok) { toast(response.error, "error"); return; } toast(`Bay ${code} restored to available`, "success"); await loadSlots(); };
 
-  const loadSlots = async () => {
-    setLoading(true);
-    const res = await apiGet<{ slots: Slot[] }>("/api/slots?includeShadow=true");
-    if (res.ok) {
-      setSlots(res.data.slots);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    loadSlots();
-  }, []);
-
-  const maintenanceSlots = slots.filter((s) => s.status === "MAINTENANCE");
-  const availableSlots = slots.filter((s) => s.status === "AVAILABLE");
-
-  const filteredAvailable = availableSlots.filter((s) =>
-    s.code.toLowerCase().includes(searchFilter.toLowerCase().trim())
-  );
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (!slotCode) {
-      setError("Please select a bay to mark for maintenance");
-      return;
-    }
-
-    if (reason.trim().length < 4) {
-      setError("Please describe the maintenance reason with at least 4 characters");
-      return;
-    }
-
-    setSubmitting(true);
-
-    const res = await apiPost<{ slot: Slot }>("/api/operator/mark-maintenance", {
-      slotCode,
-      reason: reason.trim(),
-    });
-
-    setSubmitting(false);
-
-    if (!res.ok) {
-      setError(res.error);
-      return;
-    }
-
-    toast(`Bay ${slotCode} flagged for maintenance`, "success");
-    setSlotCode("");
-    setReason("");
-    await loadSlots();
-  };
-
-  const handleQuickRelease = async (code: string) => {
-    const res = await apiPost<{ slot: Slot }>("/api/operator/override", {
-      slotCode: code,
-      status: "AVAILABLE",
-      reason: "Maintenance completed; inspected and reopened for parking",
-    });
-
-    if (!res.ok) {
-      toast(res.error, "error");
-      return;
-    }
-
-    toast(`Bay ${code} restored to AVAILABLE`, "success");
-    await loadSlots();
-  };
-
-  return (
-    <div className="max-w-4xl">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold tracking-tight text-neutral-900">Bay Maintenance Management</h1>
-        <p className="text-xs text-neutral-500 mt-1">Flag bays out-of-order for cleaning or repair, and manage active work orders</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Form to Flag for Maintenance */}
-        <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
-            <div>
-              <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
-                <Wrench size={16} className="text-amber-600" />
-                Schedule Maintenance
-              </h3>
-              <p className="text-xs text-neutral-500 mt-0.5">Take an available bay out of service</p>
-            </div>
-          </div>
-
-          {error && (
-            <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2">
-              <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
-                Target Available Bay <span className="text-red-500">*</span>
-              </label>
-
-              <div className="mb-2 relative">
-                <input
-                  type="text"
-                  placeholder="Filter by code…"
-                  value={searchFilter}
-                  onChange={(e) => setSearchFilter(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-md border border-neutral-300 focus:outline-none focus:ring-1 focus:ring-emerald-600"
-                />
-                <Search size={14} className="absolute left-2.5 top-2 text-neutral-400" />
-              </div>
-
-              <select
-                value={slotCode}
-                onChange={(e) => setSlotCode(e.target.value)}
-                required
-                className="w-full text-xs p-2.5 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
-              >
-                <option value="">— Choose an available bay ({filteredAvailable.length}) —</option>
-                {filteredAvailable.map((s) => (
-                  <option key={s.id} value={s.code}>
-                    {s.code} • {s.zone?.name ?? "Zone"} ({s.slotType})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="maint-reason" className="block text-xs font-semibold text-neutral-700 mb-1">
-                Reason / Maintenance Work Required <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                id="maint-reason"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="e.g. Oil spill cleaning, EV charging unit inspection, bay sensor recalibration..."
-                rows={3}
-                required
-                minLength={4}
-                className="w-full text-xs p-2.5 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-emerald-600"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={submitting || !slotCode}
-              className="w-full mt-2 inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
-            >
-              {submitting ? <Loader2 size={16} className="animate-spin" /> : <Wrench size={16} />}
-              <span>{submitting ? "Flagging Bay…" : "Flag Bay For Maintenance"}</span>
-            </button>
-          </form>
-        </div>
-
-        {/* Current Bays in Maintenance Panel */}
-        <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
-            <div>
-              <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
-                <Clock size={16} className="text-neutral-500" />
-                Active Maintenance Bays ({maintenanceSlots.length})
-              </h3>
-              <p className="text-xs text-neutral-500 mt-0.5">Currently blocked from gate allocation</p>
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="text-center py-8 px-6 text-neutral-400 flex flex-col items-center justify-center">
-              <Loader2 size={20} className="animate-spin text-neutral-400" />
-            </div>
-          ) : maintenanceSlots.length === 0 ? (
-            <div className="text-center py-10 px-6 text-neutral-400 flex flex-col items-center justify-center">
-              <CheckCircle2 size={32} className="text-emerald-600 mb-2" />
-              <h3 className="text-sm font-semibold text-neutral-800 mt-2 mb-1">All Systems Operational</h3>
-              <p className="text-xs text-neutral-500">Zero bays currently marked under maintenance.</p>
-            </div>
-          ) : (
-            <div className="space-y-2.5 max-h-96 overflow-y-auto pr-1">
-              {maintenanceSlots.map((slot) => (
-                <div
-                  key={slot.id}
-                  className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 flex items-center justify-between text-xs"
-                >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-amber-900 px-2 py-0.5 rounded bg-white border border-amber-300">
-                        {slot.code}
-                      </span>
-                      <span className="font-semibold text-neutral-700">
-                        {slot.zone?.name ?? `Level ${slot.zone?.level ?? 0}`}
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-neutral-500 mt-1">
-                      {slot.slotType} • {slot.distanceToGate}m to gate
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleQuickRelease(slot.code)}
-                    className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 rounded-md bg-white border border-emerald-300 text-emerald-800 hover:bg-emerald-50 transition-colors shadow-2xs"
-                    title="Release and mark AVAILABLE"
-                  >
-                    <Check size={12} className="text-emerald-600" /> Reopen
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+  return <div className="max-w-5xl">
+    <OperatorPageHeader eyebrow="Facility care" title="Maintenance control" description="Temporarily remove bays from allocation and reopen them once work is complete." icon={Wrench} />
+    <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+      <OperatorCard><div className="mb-5 border-b border-ops-border pb-4"><h2 className="m-0 text-lg font-bold text-ops-ink">Take a bay out of service</h2><p className="mt-1 text-sm text-ops-muted">Only currently available bays can be sent to maintenance.</p></div>{error && <FormError>{error}</FormError>}
+        <form onSubmit={submit} className="space-y-5"><div><label htmlFor="bay-search" className="mb-2 block text-sm font-bold text-ops-ink">Available bay <span className="text-status-danger">*</span></label>{loading ? <div className="flex items-center gap-2 rounded-xl bg-ops-canvas p-4 text-sm text-ops-muted"><Loader2 className="size-4 animate-spin" /> Loading facility bays…</div> : <><div className="relative mb-2"><Search className="absolute left-3 top-3 size-4 text-ops-muted" /><input id="bay-search" value={searchFilter} onChange={(event) => setSearchFilter(event.target.value)} placeholder="Filter by bay code" className="w-full rounded-xl border border-ops-border bg-[#fbfdfb] py-3 pr-4 pl-10 text-sm text-ops-ink outline-none transition focus:border-ops-primary focus:ring-4 focus:ring-pine-50" /></div><select value={slotCode} onChange={(event) => setSlotCode(event.target.value)} className="w-full rounded-xl border border-ops-border bg-white px-4 py-3 text-sm text-ops-ink outline-none transition focus:border-ops-primary focus:ring-4 focus:ring-pine-50"><option value="">Choose an available bay ({availableSlots.length})</option>{availableSlots.map((slot) => <option key={slot.id} value={slot.code}>{slot.code} · {slot.zone?.name ?? "Zone"} · {slot.slotType}</option>)}</select></>}</div><div><label htmlFor="maintenance-reason" className="mb-2 block text-sm font-bold text-ops-ink">Work required <span className="text-status-danger">*</span></label><textarea id="maintenance-reason" value={reason} onChange={(event) => setReason(event.target.value)} rows={4} minLength={4} required placeholder="Describe the repair, inspection, cleaning, or safety work required." className="w-full rounded-xl border border-ops-border bg-[#fbfdfb] px-4 py-3 text-sm text-ops-ink outline-none transition placeholder:text-[#a1afa7] focus:border-ops-primary focus:ring-4 focus:ring-pine-50" /></div><button type="submit" disabled={submitting || !slotCode} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-status-warning px-5 py-3 text-sm font-bold text-white shadow-[0_8px_18px_rgba(169,104,0,0.18)] transition hover:bg-[#875500] disabled:cursor-wait disabled:opacity-70">{submitting ? <Loader2 className="size-4 animate-spin" /> : <Wrench className="size-4" />}{submitting ? "Scheduling maintenance…" : "Flag for maintenance"}</button></form>
+      </OperatorCard>
+      <OperatorCard><div className="mb-5 flex items-start justify-between border-b border-ops-border pb-4"><div><h2 className="m-0 text-lg font-bold text-ops-ink">Active maintenance</h2><p className="mt-1 text-sm text-ops-muted">Bays currently excluded from gate allocation.</p></div><span className="rounded-full bg-status-warning-soft px-3 py-1 text-xs font-bold text-status-warning">{maintenanceSlots.length} active</span></div>{loading ? <div className="flex min-h-52 items-center justify-center"><Loader2 className="size-5 animate-spin text-ops-muted" /></div> : maintenanceSlots.length === 0 ? <div className="flex min-h-52 flex-col items-center justify-center text-center"><CheckCircle2 className="size-9 text-status-success" /><h3 className="mb-1 mt-3 text-sm font-bold text-ops-ink">All systems operational</h3><p className="max-w-xs text-xs text-ops-muted">No parking bays are currently under maintenance.</p></div> : <div className="max-h-[430px] space-y-3 overflow-y-auto pr-1">{maintenanceSlots.map((slot) => <article key={slot.id} className="rounded-xl border border-status-warning/25 bg-status-warning-soft p-4"><div className="flex items-start justify-between gap-3"><div><span className="rounded-md border border-status-warning/30 bg-white px-2 py-1 font-mono text-sm font-bold text-ops-ink">{slot.code}</span><p className="mt-2 text-sm font-semibold text-ops-ink">{slot.zone?.name ?? `Level ${slot.zone?.level ?? 0}`}</p><p className="mt-0.5 text-xs text-ops-muted">{slot.slotType} · {slot.distanceToGate}m from gate</p></div><button type="button" onClick={() => void reopen(slot.code)} disabled={releasing === slot.code} className="inline-flex items-center gap-1.5 rounded-lg border border-status-success/30 bg-white px-3 py-2 text-xs font-bold text-status-success transition hover:bg-status-success-soft disabled:opacity-70">{releasing === slot.code ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}{releasing === slot.code ? "Reopening…" : "Reopen"}</button></div></article>)}</div>}</OperatorCard>
     </div>
-  );
+  </div>;
 }

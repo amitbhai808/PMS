@@ -1,282 +1,89 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import {
-  ArrowRightLeft,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-  CarFront,
-  ArrowRight,
-} from "lucide-react";
+import { ArrowRight, ArrowRightLeft, CarFront, CheckCircle2, Loader2, RotateCcw } from "lucide-react";
 import { apiGet, apiPost } from "@/lib/client-api";
 import { useToast } from "@/components/toast";
-import { Booking } from "@/components/parking/booking-row";
-import { Slot } from "@/components/parking/slot-card";
+import type { Booking } from "@/components/parking/booking-row";
+import type { Slot } from "@/components/parking/slot-card";
+import { FormError, OperatorCard, OperatorPageHeader } from "@/components/admin_dashboards/operator-ui";
 
 function ReassignForm() {
   const searchParams = useSearchParams();
   const initialBookingId = searchParams.get("bookingId") ?? "";
-
+  const { toast } = useToast();
   const [activeBookings, setActiveBookings] = useState<Booking[]>([]);
   const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [bookingId, setBookingId] = useState(initialBookingId);
   const [targetSlotCode, setTargetSlotCode] = useState("");
   const [reason, setReason] = useState("");
-
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [result, setResult] = useState<{
-    plate: string;
-    oldSlot: string;
-    newSlot: string;
-  } | null>(null);
-
-  const { toast } = useToast();
+  const [result, setResult] = useState<{ plate: string; oldSlot: string; newSlot: string } | null>(null);
 
   const loadData = async () => {
     setLoading(true);
-    const [bookingsRes, slotsRes] = await Promise.all([
+    const [bookingsResult, slotsResult] = await Promise.all([
       apiGet<{ bookings: Booking[] }>("/api/bookings?status=ACTIVE&take=50"),
       apiGet<{ slots: Slot[] }>("/api/slots?includeShadow=true"),
     ]);
-
-    if (bookingsRes.ok) setActiveBookings(bookingsRes.data.bookings);
-    if (slotsRes.ok) {
-      setAvailableSlots(slotsRes.data.slots.filter((s) => s.status === "AVAILABLE"));
-    }
+    if (bookingsResult.ok) setActiveBookings(bookingsResult.data.bookings);
+    if (slotsResult.ok) setAvailableSlots(slotsResult.data.slots.filter((slot) => slot.status === "AVAILABLE"));
     setLoading(false);
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { void loadData(); }, []);
+  useEffect(() => { if (initialBookingId) setBookingId(initialBookingId); }, [initialBookingId]);
 
-  useEffect(() => {
-    if (initialBookingId) setBookingId(initialBookingId);
-  }, [initialBookingId]);
+  const selectedBooking = activeBookings.find((booking) => booking.id === bookingId);
+  const selectedSlot = availableSlots.find((slot) => slot.code === targetSlotCode);
+  const reset = () => { setBookingId(""); setTargetSlotCode(""); setReason(""); setResult(null); setError(""); };
 
-  const selectedBooking = activeBookings.find((b) => b.id === bookingId);
-  const selectedSlot = availableSlots.find((s) => s.code === targetSlotCode);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (!bookingId) {
-      setError("Please select an active vehicle booking");
-      return;
-    }
-
-    if (!targetSlotCode) {
-      setError("Please select a target available parking bay");
-      return;
-    }
-
-    if (reason.trim().length < 4) {
-      setError("Please describe the reassignment reason with at least 4 characters");
-      return;
-    }
-
-    setSubmitting(true);
-
-    const res = await apiPost<{ booking: Booking; unchanged: boolean }>("/api/operator/manual-assign", {
-      bookingId,
-      slotCode: targetSlotCode,
-      reason: reason.trim(),
-    });
-
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!bookingId || !targetSlotCode) { setError("Select both an active vehicle session and a vacant destination bay."); return; }
+    if (reason.trim().length < 4) { setError("Provide a reassignment reason with at least 4 characters."); return; }
+    setError(""); setSubmitting(true);
+    const response = await apiPost<{ booking: Booking; unchanged: boolean }>("/api/operator/manual-assign", { bookingId, slotCode: targetSlotCode, reason: reason.trim() });
     setSubmitting(false);
-
-    if (!res.ok) {
-      setError(res.error);
-      return;
-    }
-
-    const oldSlot = selectedBooking?.slot?.code ?? "Previous Bay";
-    setResult({
-      plate: selectedBooking?.licensePlate ?? "Vehicle",
-      oldSlot,
-      newSlot: targetSlotCode,
-    });
-
+    if (!response.ok) { setError(response.error); return; }
+    const oldSlot = selectedBooking?.slot?.code ?? "Previous bay";
+    setResult({ plate: selectedBooking?.licensePlate ?? "Vehicle", oldSlot, newSlot: targetSlotCode });
     toast(`Vehicle ${selectedBooking?.licensePlate} moved from ${oldSlot} to ${targetSlotCode}`, "success");
     await loadData();
   };
 
-  const handleReset = () => {
-    setBookingId("");
-    setTargetSlotCode("");
-    setReason("");
-    setResult(null);
-    setError("");
-  };
-
-  return (
-    <div className="max-w-2xl">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold tracking-tight text-neutral-900">Manual Bay Reassignment</h1>
-        <p className="text-xs text-neutral-500 mt-1">Transfer an active parked vehicle to a different available parking bay</p>
+  return <div className="max-w-4xl">
+    <OperatorPageHeader eyebrow="Operator action" title="Reassign an active vehicle" description="Move a currently parked vehicle to a safe, available replacement bay." icon={ArrowRightLeft} />
+    {result ? <OperatorCard className="border-status-success/30 bg-status-success-soft">
+      <div className="flex items-start gap-3 border-b border-status-success/20 pb-4"><CheckCircle2 className="mt-0.5 size-6 text-status-success" /><div><h2 className="m-0 text-lg font-bold text-ops-ink">Vehicle reassigned</h2><p className="mt-1 text-sm text-ops-muted">The live session and bay availability have been updated.</p></div></div>
+      <div className="my-6 grid items-center gap-3 rounded-xl border border-status-success/20 bg-white p-5 text-center sm:grid-cols-[1fr_auto_1fr]">
+        <div><span className="block text-[10px] font-bold uppercase tracking-wider text-ops-muted">Previous bay</span><strong className="font-mono text-2xl text-ops-muted line-through">{result.oldSlot}</strong></div>
+        <ArrowRight className="mx-auto size-6 text-status-success" />
+        <div><span className="block text-[10px] font-bold uppercase tracking-wider text-status-success">New assigned bay</span><strong className="font-mono text-3xl text-ops-ink">{result.newSlot}</strong></div>
       </div>
-
-      {result ? (
-        <div className="bg-emerald-50/50 border border-emerald-200 rounded-xl p-5 mb-6 shadow-xs animate-in fade-in zoom-in-95 duration-150">
-          <div className="flex items-center gap-2 pb-3 border-b border-emerald-200 mb-4">
-            <CheckCircle2 size={22} className="text-emerald-700" />
-            <h3 className="!m-0 text-base font-bold text-emerald-800">
-              Vehicle Reassigned Successfully
-            </h3>
+      <dl className="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-[140px_1fr] [&>dt]:font-medium [&>dt]:text-ops-muted [&>dd]:m-0 [&>dd]:font-semibold [&>dd]:text-ops-ink"><dt>Vehicle plate</dt><dd className="font-mono">{result.plate}</dd><dt>Session status</dt><dd className="text-status-success">ACTIVE · UPDATED</dd><dt>Previous bay</dt><dd>Returned to the available pool</dd></dl>
+      <div className="mt-6 flex justify-end"><button type="button" onClick={reset} className="inline-flex items-center gap-2 rounded-xl bg-ops-primary px-5 py-3 text-sm font-bold text-white transition hover:bg-ops-primary-hover"><ArrowRightLeft className="size-4" /> Reassign another vehicle</button></div>
+    </OperatorCard> : <OperatorCard>
+      {error && <FormError>{error}</FormError>}
+      <form onSubmit={submit} className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-5">
+          <div><label htmlFor="active-booking" className="mb-2 block text-sm font-bold text-ops-ink">Active vehicle session <span className="text-status-danger">*</span></label>
+            {loading ? <div className="flex items-center gap-2 rounded-xl bg-ops-canvas p-4 text-sm text-ops-muted"><Loader2 className="size-4 animate-spin" /> Loading active sessions…</div> : activeBookings.length === 0 ? <div className="rounded-xl border border-ops-border bg-ops-canvas p-4 text-sm text-ops-muted">No active vehicle sessions need reassignment.</div> : <select id="active-booking" value={bookingId} onChange={(event) => setBookingId(event.target.value)} className="w-full rounded-xl border border-ops-border bg-ops-surface px-4 py-3 text-sm text-ops-ink outline-none transition focus:border-ops-primary focus:ring-4 focus:ring-pine-50"><option value="">Select a parked vehicle ({activeBookings.length})</option>{activeBookings.map((booking) => <option key={booking.id} value={booking.id}>{booking.licensePlate} · {booking.slot?.code} · {booking.slot?.zone?.name ?? "Zone"}</option>)}</select>}
           </div>
-
-          <div className="p-4 rounded-xl bg-white border border-emerald-200 flex items-center justify-center gap-4 my-4 shadow-2xs">
-            <div className="text-center">
-              <span className="text-[10px] text-neutral-400 font-semibold block uppercase">From</span>
-              <span className="font-mono text-xl font-bold text-neutral-600 line-through">
-                {result.oldSlot}
-              </span>
-            </div>
-            <ArrowRight size={20} className="text-emerald-600" />
-            <div className="text-center">
-              <span className="text-[10px] text-emerald-600 font-semibold block uppercase">To New Bay</span>
-              <span className="font-mono text-2xl font-extrabold text-emerald-800">
-                {result.newSlot}
-              </span>
-            </div>
-          </div>
-
-          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm mb-5 [&>dt]:font-medium [&>dt]:text-neutral-500 [&>dd]:text-neutral-900 [&>dd]:m-0">
-            <dt>Vehicle Plate:</dt>
-            <dd className="font-mono text-base">{result.plate}</dd>
-
-            <dt>Status:</dt>
-            <dd className="text-emerald-700 font-semibold">ACTIVE SESSION (Updated)</dd>
-
-            <dt>Previous Bay:</dt>
-            <dd className="text-neutral-500">Released back to AVAILABLE pool</dd>
-          </dl>
-
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={handleReset}
-              className="inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
-            >
-              Reassign Another Vehicle
-            </button>
-          </div>
+          {selectedBooking && <div className="rounded-xl border border-status-info/20 bg-status-info-soft p-4 text-sm"><span className="text-status-info">Currently parked</span><div className="mt-1 flex items-center gap-2 font-semibold text-ops-ink"><CarFront className="size-4" /> {selectedBooking.licensePlate} · {selectedBooking.slot?.code}</div></div>}
         </div>
-      ) : (
-        <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
-          {error && (
-            <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2">
-              <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Booking to reassign */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
-                Active Vehicle Session <span className="text-red-500">*</span>
-              </label>
-
-              {loading ? (
-                <div className="p-3 text-xs text-neutral-500 flex items-center gap-2">
-                  <Loader2 size={16} className="animate-spin" /> Loading active sessions…
-                </div>
-              ) : activeBookings.length === 0 ? (
-                <div className="p-3 rounded-lg bg-neutral-50 text-xs text-neutral-500 border border-neutral-200">
-                  No active vehicle sessions to reassign.
-                </div>
-              ) : (
-                <select
-                  value={bookingId}
-                  onChange={(e) => setBookingId(e.target.value)}
-                  required
-                  className="w-full text-xs p-2.5 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
-                >
-                  <option value="">— Select an active parked vehicle ({activeBookings.length}) —</option>
-                  {activeBookings.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.licensePlate} • Current Bay: {b.slot?.code} ({b.slot?.zone?.name ?? "Zone"}) • {b.vehicle?.type ?? "Vehicle"}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            {/* Target Available Slot */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
-                Target Destination Bay <span className="text-red-500">*</span>
-              </label>
-
-              <select
-                value={targetSlotCode}
-                onChange={(e) => setTargetSlotCode(e.target.value)}
-                required
-                disabled={availableSlots.length === 0}
-                className="w-full text-xs p-2.5 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
-              >
-                <option value="">— Select a vacant target bay ({availableSlots.length} available) —</option>
-                {availableSlots.map((s) => (
-                  <option key={s.id} value={s.code}>
-                    {s.code} • {s.zone?.name ?? `Level ${s.zone?.level ?? 0}`} • {s.slotType} (fits {s.allowedVehicleType})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Reason */}
-            <div>
-              <label htmlFor="reassign-reason" className="block text-xs font-semibold text-neutral-700 mb-1">
-                Reason for Bay Reassignment <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                id="reassign-reason"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="e.g. Driver requested ground floor spot for luggage loading; bay obstruction near B1-002..."
-                rows={3}
-                required
-                minLength={4}
-                className="w-full text-xs p-2.5 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-emerald-600"
-              />
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                type="submit"
-                disabled={submitting || !bookingId || !targetSlotCode}
-                className="flex-1 inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
-              >
-                {submitting ? <Loader2 size={16} className="animate-spin" /> : <ArrowRightLeft size={16} />}
-                <span>{submitting ? "Moving Vehicle…" : "Confirm Bay Reassignment"}</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleReset}
-                className="h-10 px-4 rounded-lg border border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50 transition-colors font-medium text-xs cursor-pointer"
-              >
-                Reset
-              </button>
-            </div>
-          </form>
+        <div className="space-y-5">
+          <div><label htmlFor="destination-bay" className="mb-2 block text-sm font-bold text-ops-ink">Destination bay <span className="text-status-danger">*</span></label><select id="destination-bay" value={targetSlotCode} onChange={(event) => setTargetSlotCode(event.target.value)} disabled={!availableSlots.length} className="w-full rounded-xl border border-ops-border bg-ops-surface px-4 py-3 text-sm text-ops-ink outline-none transition focus:border-ops-primary focus:ring-4 focus:ring-pine-50 disabled:cursor-not-allowed disabled:bg-ops-canvas"><option value="">Select a vacant bay ({availableSlots.length})</option>{availableSlots.map((slot) => <option key={slot.id} value={slot.code}>{slot.code} · {slot.zone?.name ?? `Level ${slot.zone?.level ?? 0}`} · {slot.slotType}</option>)}</select></div>
+          {selectedSlot && <div className="rounded-xl border border-status-success/20 bg-status-success-soft p-4 text-sm"><span className="text-status-success">Destination details</span><div className="mt-1 font-semibold text-ops-ink">{selectedSlot.code} · {selectedSlot.slotType} · fits {selectedSlot.allowedVehicleType}</div></div>}
         </div>
-      )}
-    </div>
-  );
+        <div className="lg:col-span-2"><label htmlFor="reassign-reason" className="mb-2 block text-sm font-bold text-ops-ink">Reason for reassignment <span className="text-status-danger">*</span></label><textarea id="reassign-reason" value={reason} onChange={(event) => setReason(event.target.value)} rows={3} minLength={4} required placeholder="Describe why the vehicle needs to move; this is saved in the audit log." className="w-full rounded-xl border border-ops-border bg-[#fbfdfb] px-4 py-3 text-sm text-ops-ink outline-none transition placeholder:text-[#a1afa7] focus:border-ops-primary focus:ring-4 focus:ring-pine-50" /></div>
+        <div className="flex justify-end gap-2 border-t border-ops-border pt-5 lg:col-span-2"><button type="button" onClick={reset} className="inline-flex items-center gap-2 rounded-xl border border-ops-border px-4 py-3 text-sm font-semibold text-ops-muted transition hover:bg-ops-canvas"><RotateCcw className="size-4" /> Reset</button><button type="submit" disabled={submitting || !bookingId || !targetSlotCode} className="inline-flex items-center gap-2 rounded-xl bg-ops-primary px-5 py-3 text-sm font-bold text-white shadow-[0_8px_18px_rgba(0,132,95,0.18)] transition hover:bg-ops-primary-hover disabled:cursor-wait disabled:opacity-70">{submitting ? <Loader2 className="size-4 animate-spin" /> : <ArrowRightLeft className="size-4" />}{submitting ? "Moving vehicle…" : "Confirm reassignment"}</button></div>
+      </form>
+    </OperatorCard>}
+  </div>;
 }
 
-export default function ReassignPage() {
-  return (
-    <Suspense fallback={<div className="min-h-[300px] flex flex-col items-center justify-center gap-3 text-neutral-400 text-sm"><Loader2 size={24} className="animate-spin text-emerald-700" /><p>Loading form…</p></div>}>
-      <ReassignForm />
-    </Suspense>
-  );
-}
+export default function ReassignPage() { return <Suspense fallback={<div className="flex min-h-[300px] flex-col items-center justify-center gap-3 text-sm text-ops-muted"><Loader2 className="size-6 animate-spin text-ops-primary" /><p>Loading reassignment…</p></div>}><ReassignForm /></Suspense>; }

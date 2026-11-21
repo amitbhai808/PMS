@@ -1,280 +1,52 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  ShieldAlert,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-  Search,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { CheckCircle2, Loader2, RotateCcw, Search, ShieldAlert } from "lucide-react";
 import { apiGet, apiPost } from "@/lib/client-api";
 import { useToast } from "@/components/toast";
-import { Slot } from "@/components/parking/slot-card";
+import type { Slot } from "@/components/parking/slot-card";
+import { FormError, OperatorCard, OperatorPageHeader } from "@/components/admin_dashboards/operator-ui";
+
+type SlotStatus = "AVAILABLE" | "OCCUPIED" | "MAINTENANCE";
+const statusOptions: { id: SlotStatus; label: string; description: string; tone: string }[] = [
+  { id: "AVAILABLE", label: "Available", description: "Open this bay for arrivals", tone: "border-status-success/30 bg-status-success-soft text-status-success" },
+  { id: "OCCUPIED", label: "Occupied", description: "Create a controlled manual hold", tone: "border-status-info/30 bg-status-info-soft text-status-info" },
+  { id: "MAINTENANCE", label: "Maintenance", description: "Keep the bay out of allocation", tone: "border-status-warning/30 bg-status-warning-soft text-status-warning" },
+];
 
 export default function SlotOverridePage() {
-  const [slots, setSlots] = useState<Slot[]>([]);
-  const [loadingSlots, setLoadingSlots] = useState(true);
-  const [slotSearch, setSlotSearch] = useState("");
-  const [selectedSlotCode, setSelectedSlotCode] = useState("");
-  const [newStatus, setNewStatus] = useState<"AVAILABLE" | "OCCUPIED" | "MAINTENANCE">("MAINTENANCE");
-  const [reason, setReason] = useState("");
-
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [successData, setSuccessData] = useState<{
-    code: string;
-    status: string;
-    reason: string;
-  } | null>(null);
-
   const { toast } = useToast();
+  const [slots, setSlots] = useState<Slot[]>([]); const [loadingSlots, setLoadingSlots] = useState(true);
+  const [slotSearch, setSlotSearch] = useState(""); const [selectedSlotCode, setSelectedSlotCode] = useState("");
+  const [newStatus, setNewStatus] = useState<SlotStatus>("MAINTENANCE"); const [reason, setReason] = useState("");
+  const [submitting, setSubmitting] = useState(false); const [error, setError] = useState("");
+  const [success, setSuccess] = useState<{ code: string; status: SlotStatus; reason: string } | null>(null);
 
-  const loadSlots = async () => {
-    setLoadingSlots(true);
-    const res = await apiGet<{ slots: Slot[] }>("/api/slots?includeShadow=true");
-    if (res.ok) {
-      setSlots(res.data.slots);
-    }
-    setLoadingSlots(false);
+  const loadSlots = async () => { setLoadingSlots(true); const response = await apiGet<{ slots: Slot[] }>("/api/slots?includeShadow=true"); if (response.ok) setSlots(response.data.slots); setLoadingSlots(false); };
+  useEffect(() => { void loadSlots(); }, []);
+  const selectedSlot = slots.find((slot) => slot.code === selectedSlotCode);
+  const filteredSlots = slots.filter((slot) => slot.code.toLowerCase().includes(slotSearch.toLowerCase().trim()));
+  const reset = () => { setSelectedSlotCode(""); setReason(""); setError(""); setSuccess(null); };
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!selectedSlotCode) { setError("Select a parking bay to override."); return; }
+    if (reason.trim().length < 4) { setError("Provide an operational reason with at least 4 characters."); return; }
+    setError(""); setSubmitting(true);
+    const response = await apiPost<{ slot: Slot }>("/api/operator/override", { slotCode: selectedSlotCode, status: newStatus, reason: reason.trim() });
+    setSubmitting(false); if (!response.ok) { setError(response.error); return; }
+    setSuccess({ code: selectedSlotCode, status: newStatus, reason: reason.trim() }); toast(`Bay ${selectedSlotCode} updated to ${newStatus}`, "success"); await loadSlots();
   };
 
-  useEffect(() => {
-    loadSlots();
-  }, []);
-
-  const selectedSlot = slots.find((s) => s.code === selectedSlotCode);
-
-  const filteredSlots = slots.filter((s) =>
-    s.code.toLowerCase().includes(slotSearch.toLowerCase().trim())
-  );
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (!selectedSlotCode) {
-      setError("Please select a parking bay to override");
-      return;
-    }
-
-    if (reason.trim().length < 4) {
-      setError("Reason must be at least 4 characters long");
-      return;
-    }
-
-    setSubmitting(true);
-
-    const res = await apiPost<{ slot: Slot }>("/api/operator/override", {
-      slotCode: selectedSlotCode,
-      status: newStatus,
-      reason: reason.trim(),
-    });
-
-    setSubmitting(false);
-
-    if (!res.ok) {
-      setError(res.error);
-      return;
-    }
-
-    setSuccessData({
-      code: selectedSlotCode,
-      status: newStatus,
-      reason: reason.trim(),
-    });
-
-    toast(`Bay ${selectedSlotCode} successfully overridden to ${newStatus}`, "success");
-    await loadSlots();
-  };
-
-  const handleReset = () => {
-    setSelectedSlotCode("");
-    setReason("");
-    setSuccessData(null);
-    setError("");
-  };
-
-  return (
-    <div className="max-w-2xl">
-      <div className="mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-neutral-800 tracking-tight m-0">Manual Bay Status Override</h1>
-        <p className="text-neutral-500 text-xs sm:text-sm mt-1 mb-0">Direct supervisor override to force bay availability, lock for inspection, or clear holds</p>
-      </div>
-
-      {successData ? (
-        <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-5 sm:p-6 mt-4 animate-in fade-in zoom-in-95 duration-150">
-          <div className="flex items-center gap-2 pb-3 border-b border-emerald-200 mb-4">
-            <CheckCircle2 size={22} className="text-emerald-700" />
-            <h3 className="!m-0 text-base font-bold text-emerald-800">
-              Bay Status Successfully Updated
-            </h3>
-          </div>
-
-          <dl className="grid grid-cols-[140px_1fr] gap-x-3 gap-y-2 text-sm mb-5 [&>dt]:text-neutral-500 [&>dt]:font-medium [&>dd]:text-neutral-800 [&>dd]:font-semibold [&>dd]:m-0">
-            <dt>Bay Identifier:</dt>
-            <dd className="font-mono text-base font-bold">{successData.code}</dd>
-
-            <dt>New Status:</dt>
-            <dd className="font-bold text-emerald-800 uppercase">{successData.status}</dd>
-
-            <dt>Documented Reason:</dt>
-            <dd className="italic">{successData.reason}</dd>
-
-            <dt>Audit Entry:</dt>
-            <dd className="text-xs text-neutral-500">Recorded with supervisor signature in facility audit trail</dd>
-          </dl>
-
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={handleReset}
-              className="inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
-            >
-              Perform Another Override
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-white border border-neutral-200 rounded-xl p-5 sm:p-6 shadow-xs">
-          {error && (
-            <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2">
-              <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4.5">
-            {/* Slot Picker */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
-                Target Bay Code <span className="text-red-500">*</span>
-              </label>
-
-              {loadingSlots ? (
-                <div className="p-3 text-xs text-neutral-500 flex items-center gap-2">
-                  <Loader2 size={16} className="animate-spin" /> Loading facility bays…
-                </div>
-              ) : (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="relative flex-1">
-                      <input
-                        type="text"
-                        placeholder="Filter bay codes (e.g. B1 or G0)…"
-                        value={slotSearch}
-                        onChange={(e) => setSlotSearch(e.target.value)}
-                        className="w-full pl-8 pr-3 py-1.5 text-xs rounded-md border border-neutral-300 focus:outline-none focus:ring-1 focus:ring-emerald-600"
-                      />
-                      <Search size={14} className="absolute left-2.5 top-2 text-neutral-400" />
-                    </div>
-                  </div>
-
-                  <select
-                    value={selectedSlotCode}
-                    onChange={(e) => {
-                      setSelectedSlotCode(e.target.value);
-                      const target = slots.find((s) => s.code === e.target.value);
-                      if (target) {
-                        setNewStatus(target.status === "AVAILABLE" ? "MAINTENANCE" : "AVAILABLE");
-                      }
-                    }}
-                    required
-                    className="w-full text-xs p-2.5 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
-                  >
-                    <option value="">— Select a parking bay ({filteredSlots.length} matching) —</option>
-                    {filteredSlots.map((s) => (
-                      <option key={s.id} value={s.code}>
-                        {s.code} ({s.status}) • {s.zone?.name ?? `Level ${s.zone?.level ?? 0}`} • {s.slotType}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {selectedSlot && (
-                <div className="mt-2.5 p-2.5 rounded-lg bg-neutral-50 border border-neutral-200 text-xs text-neutral-600 flex items-center justify-between">
-                  <span>
-                    Current state: <strong className="uppercase">{selectedSlot.status}</strong>
-                  </span>
-                  <span>Type: <strong>{selectedSlot.slotType}</strong></span>
-                  <span>Allowed: <strong>{selectedSlot.allowedVehicleType}</strong></span>
-                </div>
-              )}
-            </div>
-
-            {/* Target Status */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
-                New Desired Status <span className="text-red-500">*</span>
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { id: "AVAILABLE", label: "AVAILABLE", desc: "Open for arrival" },
-                  { id: "OCCUPIED", label: "OCCUPIED", desc: "Manual hold" },
-                  { id: "MAINTENANCE", label: "MAINTENANCE", desc: "Out of order" },
-                ].map((st) => {
-                  const isSelected = newStatus === st.id;
-                  return (
-                    <button
-                      key={st.id}
-                      type="button"
-                      onClick={() => setNewStatus(st.id as "AVAILABLE" | "OCCUPIED" | "MAINTENANCE")}
-                      className={`p-2.5 rounded-lg border text-left transition-colors ${
-                        isSelected
-                          ? "border-emerald-600 bg-emerald-50 text-emerald-900 font-bold"
-                          : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
-                      }`}
-                    >
-                      <div className="text-xs uppercase">{st.label}</div>
-                      <div className="text-[10px] text-neutral-500 font-normal mt-0.5">{st.desc}</div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Reason */}
-            <div>
-              <label htmlFor="override-reason" className="block text-xs font-semibold text-neutral-700 mb-1">
-                Mandatory Operational Justification <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                id="override-reason"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="e.g. Ground maintenance team scheduled line re-painting; barrier gate issue resolved..."
-                rows={3}
-                required
-                minLength={4}
-                className="w-full text-xs p-2.5 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-emerald-600"
-              />
-              <span className="text-[11px] text-neutral-400 mt-1 block">
-                Must be at least 4 characters long. Saved permanently in audit logs.
-              </span>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                type="submit"
-                disabled={submitting || !selectedSlotCode}
-                className="flex-1 inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
-              >
-                {submitting ? <Loader2 size={16} className="animate-spin" /> : <ShieldAlert size={16} />}
-                <span>{submitting ? "Applying Override…" : "Commit Status Override"}</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleReset}
-                className="h-10 px-4 rounded-lg border border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50 transition-colors font-medium text-xs cursor-pointer"
-              >
-                Reset
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-    </div>
-  );
+  return <div className="max-w-4xl">
+    <OperatorPageHeader eyebrow="Supervisor control" title="Override bay status" description="Apply an audited operational status change when the live bay state needs intervention." icon={ShieldAlert} />
+    {success ? <OperatorCard className="border-status-success/30 bg-status-success-soft"><div className="flex gap-3 border-b border-status-success/20 pb-4"><CheckCircle2 className="size-6 text-status-success" /><div><h2 className="m-0 text-lg font-bold text-ops-ink">Override recorded</h2><p className="mt-1 text-sm text-ops-muted">The new bay state is live and recorded in the audit trail.</p></div></div><dl className="my-6 grid gap-x-4 gap-y-2 text-sm sm:grid-cols-[150px_1fr] [&>dt]:font-medium [&>dt]:text-ops-muted [&>dd]:m-0 [&>dd]:font-semibold [&>dd]:text-ops-ink"><dt>Bay identifier</dt><dd className="font-mono text-base">{success.code}</dd><dt>New status</dt><dd className="uppercase text-status-success">{success.status}</dd><dt>Reason</dt><dd>{success.reason}</dd><dt>Audit status</dt><dd>Supervisor override recorded</dd></dl><div className="flex justify-end"><button type="button" onClick={reset} className="inline-flex items-center gap-2 rounded-xl bg-ops-primary px-5 py-3 text-sm font-bold text-white transition hover:bg-ops-primary-hover"><ShieldAlert className="size-4" /> Perform another override</button></div></OperatorCard> : <OperatorCard>
+      {error && <FormError>{error}</FormError>}
+      <form onSubmit={submit} className="space-y-6">
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]"><div><label htmlFor="target-bay" className="mb-2 block text-sm font-bold text-ops-ink">Target bay <span className="text-status-danger">*</span></label>{loadingSlots ? <div className="flex items-center gap-2 rounded-xl bg-ops-canvas p-4 text-sm text-ops-muted"><Loader2 className="size-4 animate-spin" /> Loading facility bays…</div> : <><div className="relative mb-2"><Search className="absolute left-3 top-3 size-4 text-ops-muted" /><input value={slotSearch} onChange={(event) => setSlotSearch(event.target.value)} placeholder="Search bay code" className="w-full rounded-xl border border-ops-border bg-[#fbfdfb] py-3 pr-4 pl-10 text-sm text-ops-ink outline-none transition placeholder:text-[#a1afa7] focus:border-ops-primary focus:ring-4 focus:ring-pine-50" /></div><select id="target-bay" value={selectedSlotCode} onChange={(event) => { setSelectedSlotCode(event.target.value); const slot = slots.find((item) => item.code === event.target.value); if (slot) setNewStatus(slot.status === "AVAILABLE" ? "MAINTENANCE" : "AVAILABLE"); }} className="w-full rounded-xl border border-ops-border bg-white px-4 py-3 text-sm text-ops-ink outline-none transition focus:border-ops-primary focus:ring-4 focus:ring-pine-50"><option value="">Select a bay ({filteredSlots.length} matches)</option>{filteredSlots.map((slot) => <option key={slot.id} value={slot.code}>{slot.code} · {slot.status} · {slot.zone?.name ?? "Zone"}</option>)}</select></>}{selectedSlot && <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl border border-ops-border bg-ops-canvas p-3 text-xs text-ops-muted"><span>Status <strong className="block text-ops-ink">{selectedSlot.status}</strong></span><span>Type <strong className="block text-ops-ink">{selectedSlot.slotType}</strong></span><span>Allowed <strong className="block text-ops-ink">{selectedSlot.allowedVehicleType}</strong></span></div>}</div>
+          <div><p className="mb-2 text-sm font-bold text-ops-ink">New status <span className="text-status-danger">*</span></p><div className="grid gap-2">{statusOptions.map((option) => <button key={option.id} type="button" onClick={() => setNewStatus(option.id)} className={`rounded-xl border p-3 text-left transition ${newStatus === option.id ? option.tone + " shadow-[inset_0_0_0_1px_currentColor]" : "border-ops-border bg-[#fbfdfb] text-ops-muted hover:border-pine-300"}`}><strong className="block text-sm">{option.label}</strong><span className="mt-0.5 block text-xs opacity-80">{option.description}</span></button>)}</div></div></div>
+        <div><label htmlFor="override-reason" className="mb-2 block text-sm font-bold text-ops-ink">Operational justification <span className="text-status-danger">*</span></label><textarea id="override-reason" value={reason} onChange={(event) => setReason(event.target.value)} rows={3} minLength={4} required placeholder="Explain why this status change is required. This is stored in the audit log." className="w-full rounded-xl border border-ops-border bg-[#fbfdfb] px-4 py-3 text-sm text-ops-ink outline-none transition placeholder:text-[#a1afa7] focus:border-ops-primary focus:ring-4 focus:ring-pine-50" /></div>
+        <div className="flex justify-end gap-2 border-t border-ops-border pt-5"><button type="button" onClick={reset} className="inline-flex items-center gap-2 rounded-xl border border-ops-border px-4 py-3 text-sm font-semibold text-ops-muted transition hover:bg-ops-canvas"><RotateCcw className="size-4" /> Reset</button><button type="submit" disabled={submitting || !selectedSlotCode} className="inline-flex items-center gap-2 rounded-xl bg-ops-primary px-5 py-3 text-sm font-bold text-white shadow-[0_8px_18px_rgba(0,132,95,0.18)] transition hover:bg-ops-primary-hover disabled:cursor-wait disabled:opacity-70">{submitting ? <Loader2 className="size-4 animate-spin" /> : <ShieldAlert className="size-4" />}{submitting ? "Applying override…" : "Commit override"}</button></div>
+      </form>
+    </OperatorCard>}
+  </div>;
 }

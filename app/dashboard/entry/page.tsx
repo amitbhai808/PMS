@@ -1,20 +1,23 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  DoorOpen,
-  CarFront,
-  Clock,
-  Printer,
-  CheckCircle2,
   AlertCircle,
+  CarFront,
+  Clock3,
+  DoorOpen,
+  Gauge,
   Loader2,
+  RotateCcw,
   Sparkles,
   Zap,
 } from "lucide-react";
 import { apiPost } from "@/lib/client-api";
+import TicketSlipPrint from "@/components/parking/ticketSlipPrint";
 import { useToast } from "@/components/toast";
+
+type VehicleType = "FOUR_WHEELER" | "TWO_WHEELER" | "EV" | "SUV";
 
 type EntryResponse = {
   booking: {
@@ -23,335 +26,338 @@ type EntryResponse = {
     licensePlate: string;
     expectedExit: string;
     hourlyRatePaise: number;
-    slot: {
-      code: string;
-      zone?: {
-        name: string;
-        level: number;
-      };
-    };
+    slot: { code: string; zone?: { name: string; level: number } };
   };
   reassigned: boolean;
   message: string;
 };
 
+const vehicleTypes: {
+  id: VehicleType;
+  label: string;
+  icon: typeof CarFront;
+}[] = [
+    { id: "FOUR_WHEELER", label: "4-Wheeler", icon: CarFront },
+    { id: "TWO_WHEELER", label: "2-Wheeler", icon: Gauge },
+    { id: "EV", label: "Electric (EV)", icon: Zap },
+    { id: "SUV", label: "SUV / Large", icon: Sparkles },
+  ];
+
+const durationOptions = [
+  { label: "1 hour", minutes: 60 },
+  { label: "2 hours", minutes: 120 },
+  { label: "4 hours", minutes: 240 },
+  { label: "8 hours", minutes: 480 },
+  { label: "Full Day", minutes: 1440 },
+];
+
 function EntryForm() {
   const searchParams = useSearchParams();
   const initialPlate = searchParams.get("plate") ?? "";
   const initialReservationId = searchParams.get("reservationId") ?? "";
+  const { toast } = useToast();
 
   const [licensePlate, setLicensePlate] = useState(initialPlate);
-  const [vehicleType, setVehicleType] = useState<"FOUR_WHEELER" | "TWO_WHEELER" | "EV" | "SUV">("FOUR_WHEELER");
-  const [durationType, setDurationType] = useState<"preset" | "custom">("preset");
-  const [durationPreset, setDurationPreset] = useState<number>(120); // 2 hours default
-  const [customMinutes, setCustomMinutes] = useState<number>(60);
+  const [vehicleType, setVehicleType] = useState<VehicleType>("FOUR_WHEELER");
+  const [durationType, setDurationType] = useState<"preset" | "custom">(
+    "preset",
+  );
+  const [durationPreset, setDurationPreset] = useState(120);
+  const [customMinutes, setCustomMinutes] = useState(60);
   const [reservationId, setReservationId] = useState(initialReservationId);
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<EntryResponse | null>(null);
-
-  const { toast } = useToast();
+  const [issuedAt, setIssuedAt] = useState<Date | null>(null);
 
   useEffect(() => {
-    if (initialPlate) setLicensePlate(initialPlate);
-    if (initialReservationId) setReservationId(initialReservationId);
+    setLicensePlate(initialPlate);
+    setReservationId(initialReservationId);
   }, [initialPlate, initialReservationId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const resetForm = () => {
+    setLicensePlate("");
+    setReservationId("");
+    setVehicleType("FOUR_WHEELER");
+    setDurationType("preset");
+    setDurationPreset(120);
+    setCustomMinutes(60);
     setError("");
-    setLoading(true);
+    setResult(null);
+    setIssuedAt(null);
+  };
 
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     const cleanPlate = licensePlate.trim().toUpperCase().replace(/\s+/g, "");
     if (!cleanPlate) {
       setError("Please provide a valid vehicle license plate number");
-      setLoading(false);
       return;
     }
 
-    const duration = durationType === "preset" ? durationPreset : customMinutes;
-
+    setError("");
+    setLoading(true);
+    const durationMinutes =
+      durationType === "preset" ? durationPreset : customMinutes;
     const payload: Record<string, unknown> = {
       licensePlate: cleanPlate,
       vehicleType,
-      durationMinutes: Number(duration),
+      durationMinutes: Number(durationMinutes),
     };
+    if (reservationId.trim()) payload.reservationId = reservationId.trim();
 
-    if (reservationId.trim()) {
-      payload.reservationId = reservationId.trim();
-    }
-
-    const res = await apiPost<EntryResponse>("/api/parking/entry", payload);
+    const response = await apiPost<EntryResponse>(
+      "/api/parking/entry",
+      payload,
+    );
     setLoading(false);
-
-    if (!res.ok) {
-      setError(res.error);
+    if (!response.ok) {
+      setError(response.error);
       return;
     }
 
-    setResult(res.data);
-    toast(`Vehicle ${cleanPlate} allocated slot ${res.data.booking.slot.code}!`, "success");
+    setResult(response.data);
+    setIssuedAt(new Date());
+    toast(
+      `Vehicle ${cleanPlate} allocated slot ${response.data.booking.slot.code}!`,
+      "success",
+    );
   };
 
-  const handleReset = () => {
-    setLicensePlate("");
-    setReservationId("");
-    setResult(null);
-    setError("");
-  };
-
-  return (
-    <div className="max-w-2xl">
-      <div className="mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-neutral-800 tracking-tight m-0">Gate Arrival & Allocation</h1>
-        <p className="text-neutral-500 text-xs sm:text-sm mt-1 mb-0">Record vehicle arrival at entrance gate and dispense parking bay assignment</p>
-      </div>
-
-      {result ? (
-        /* Entry Ticket Confirmation Card */
-        <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-5 sm:p-6 mt-4 print:border-none print:shadow-none animate-in fade-in zoom-in-95 duration-200">
-          <div className="flex items-center justify-between pb-3 border-b border-emerald-200 mb-4">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={24} className="text-emerald-700" />
-              <div>
-                <h3 className="!m-0 text-base font-bold text-emerald-800">
-                  Entry Recorded & Bay Assigned
-                </h3>
-                <span className="text-[11px] text-neutral-500">
-                  Ticket #{result.booking.id.slice(-8).toUpperCase()}
-                </span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="print:hidden text-xs flex items-center gap-1.5 text-neutral-600 hover:text-neutral-900 border border-neutral-300 rounded px-2.5 py-1 bg-white font-medium"
-            >
-              <Printer size={13} /> Print Ticket
-            </button>
+  if (result) {
+    return (
+      <div className="max-w-3xl">
+        <div className="mb-6">
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-[#DAF1DE] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#235347]">
+            <DoorOpen className="size-3.5" /> Arrival desk
           </div>
-
-          {/* Big Bay Callout */}
-          <div className="my-4 p-5 rounded-xl bg-white border-2 border-emerald-500 text-center shadow-xs">
-            <span className="text-xs uppercase tracking-wider text-neutral-500 font-bold block mb-1">
-              PROCEED TO DESIGNATED BAY
-            </span>
-            <div className="font-mono text-4xl font-extrabold text-emerald-800 tracking-tight">
-              {result.booking.slot.code}
-            </div>
-            <div className="text-sm font-semibold text-neutral-700 mt-1">
-              {result.booking.slot.zone?.name ?? "Zone Level"} (Level {result.booking.slot.zone?.level ?? 0})
-            </div>
-          </div>
-
+          <h1 className="m-0 text-2xl font-bold tracking-[-0.03em] text-[#163B32]">
+            Gate arrival & allocation
+          </h1>
+        </div>
+        <div className="space-y-5">
+          <TicketSlipPrint
+            ticketId={result.booking.id}
+            licensePlate={result.booking.licensePlate}
+            vehicleType={vehicleType}
+            slotCode={result.booking.slot.code}
+            zoneName={result.booking.slot.zone?.name}
+            level={result.booking.slot.zone?.level}
+            hourlyRatePaise={result.booking.hourlyRatePaise}
+            expectedExit={result.booking.expectedExit}
+            issuedAt={issuedAt ?? new Date()}
+          />
           {result.reassigned && (
-            <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-2">
-              <Sparkles size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <strong>Automatic Smart Reassignment:</strong> The original reserved slot was occupied.
-                Parkwise automatically allocated an alternate compatible bay of equal priority.
-              </div>
+            <div className="mb-5 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+              <Sparkles className="mt-0.5 size-4 shrink-0 text-amber-600" />
+              <span>
+                <strong>Automatic smart reassignment:</strong> The reserved bay
+                was unavailable, so Parkwise allocated a compatible alternate.
+              </span>
             </div>
           )}
-
-          <dl className="grid grid-cols-[140px_1fr] gap-x-3 gap-y-2 text-sm mb-6 [&>dt]:text-neutral-500 [&>dt]:font-medium [&>dd]:text-neutral-800 [&>dd]:font-semibold [&>dd]:m-0">
-            <dt>License Plate:</dt>
-            <dd className="font-mono text-base">{result.booking.licensePlate}</dd>
-
-            <dt>Hourly Rate:</dt>
-            <dd>₹{(result.booking.hourlyRatePaise / 100).toFixed(2)}/hour</dd>
-
-            <dt>Expected Exit:</dt>
-            <dd>{new Date(result.booking.expectedExit).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</dd>
-
-            <dt>Check-in Status:</dt>
-            <dd className="text-emerald-700 font-semibold">ACTIVE SESSION</dd>
-          </dl>
-
-          <div className="flex justify-end gap-3 print:hidden">
+          <div className="flex justify-end print:hidden">
             <button
               type="button"
-              onClick={handleReset}
-              className="inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
+              onClick={resetForm}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#00845f] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_18px_rgba(0,132,95,0.18)] transition hover:bg-[#006d51]"
             >
-              Check In Next Vehicle
+              <DoorOpen className="size-4" /> Check in next vehicle
             </button>
           </div>
         </div>
-      ) : (
-        /* Entry Form */
-        <div className="bg-white border border-neutral-200 rounded-xl p-5 sm:p-6 shadow-xs">
-          {error && (
-            <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2">
-              <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
+      </div>
+    );
+  }
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4.5">
-            {/* License Plate */}
+  return (
+    <div className="max-w-4xl">
+      <div className="mb-6">
+        <h1 className="m-0 text-2xl font-bold tracking-[-0.03em] text-[#163B32]">
+          Gate arrival & allocation
+        </h1>
+        <p className="mt-1 text-sm text-[#658276]">
+          Record a vehicle arrival and assign the best available bay.
+        </p>
+      </div>
+      <section className="mb-4 rounded-2xl border border-[#dce9df] bg-white p-5 shadow-[0_10px_30px_rgba(22,59,50,0.05)] md:p-6">
+        <div className="mb-6 flex flex-col gap-3 border-b border-[#edf3ee] pb-5 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-[#DAF1DE] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#235347]">
+              <DoorOpen className="size-3.5" /> Arrival desk
+            </div>
+            <h2 className="m-0 text-xl font-bold tracking-[-0.03em] text-[#163B32]">
+              Ready to assign a bay
+            </h2>
+            <p className="mt-1 text-xs text-[#658276]">
+              Vehicle details are sent securely to the live allocation service.
+            </p>
+          </div>
+          <span className="inline-flex items-center gap-2 text-xs font-semibold text-[#658276]">
+            <span className="size-2 rounded-full bg-[#8EB69B]" /> Entry lane
+            ready
+          </span>
+        </div>
+
+        {error && (
+          <div
+            role="alert"
+            className="mb-5 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700"
+          >
+            <AlertCircle className="mt-0.5 size-4 shrink-0 text-red-500" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
             <div>
-              <label htmlFor="license-plate" className="block text-xs font-semibold text-neutral-700 mb-1.5">
-                License Plate Number <span className="text-red-500">*</span>
+              <label
+                htmlFor="license-plate"
+                className="mb-2 block text-sm font-bold text-[#163B32]"
+              >
+                License plate number <span className="text-[#c44935]">*</span>
               </label>
               <input
                 id="license-plate"
                 type="text"
                 value={licensePlate}
-                onChange={(e) => setLicensePlate(e.target.value.toUpperCase())}
+                onChange={(event) =>
+                  setLicensePlate(event.target.value.toUpperCase())
+                }
                 placeholder="e.g. MH12AB1234 or DL8CAF5030"
                 required
                 autoFocus
-                className="w-full text-base font-mono tracking-wider p-2.5 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
+                className="w-full rounded-xl border border-[#cbdacf] bg-[#fbfdfb] px-4 py-3.5 font-mono text-base text-[#163B32] outline-none transition placeholder:text-[#a1afa7] focus:border-[#008c68] focus:ring-4 focus:ring-[#DAF1DE]"
               />
-              <span className="text-[11px] text-neutral-500 mt-1 block">
-                Standard state vehicle registration plate. Auto-capitalizes.
-              </span>
-            </div>
-
-            {/* Vehicle Type */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
-                Vehicle Classification <span className="text-red-500">*</span>
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {[
-                  { id: "FOUR_WHEELER", label: "4-Wheeler", icon: CarFront },
-                  { id: "TWO_WHEELER", label: "2-Wheeler", icon: Clock },
-                  { id: "EV", label: "Electric (EV)", icon: Zap },
-                  { id: "SUV", label: "SUV / Large", icon: Sparkles },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  const isSelected = vehicleType === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setVehicleType(item.id as "FOUR_WHEELER" | "TWO_WHEELER" | "EV" | "SUV")}
-                      className={`p-2.5 rounded-lg border text-left flex flex-col justify-between transition-colors ${
-                        isSelected
-                          ? "border-emerald-600 bg-emerald-50/70 text-emerald-900 font-semibold"
-                          : "border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-700"
-                      }`}
-                    >
-                      <Icon size={16} className={isSelected ? "text-emerald-700" : "text-neutral-400"} />
-                      <span className="text-xs mt-2">{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Duration selector */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
-                Estimated Parking Duration
-              </label>
-
-              {/* Preset buttons */}
-              <div className="flex flex-wrap gap-2 mb-2">
-                {[
-                  { mins: 60, label: "1 hour" },
-                  { mins: 120, label: "2 hours" },
-                  { mins: 240, label: "4 hours" },
-                  { mins: 480, label: "8 hours" },
-                  { mins: 1440, label: "Full Day" },
-                ].map((p) => {
-                  const active = durationType === "preset" && durationPreset === p.mins;
-                  return (
-                    <button
-                      key={p.mins}
-                      type="button"
-                      onClick={() => {
-                        setDurationType("preset");
-                        setDurationPreset(p.mins);
-                      }}
-                      className={`py-1.5 px-3 border rounded-md text-xs font-medium cursor-pointer transition-colors ${
-                        active
-                          ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold"
-                          : "border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50"
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  );
-                })}
+              <p className="mt-2 text-xs text-[#658276]">
+                Standard registration plate. Auto-capitalizes as you type.
+              </p>
+              <p className="mb-2 mt-5 text-sm font-bold text-[#163B32]">
+                Estimated parking duration
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {durationOptions.map((option) => (
+                  <button
+                    key={option.minutes}
+                    type="button"
+                    onClick={() => {
+                      setDurationType("preset");
+                      setDurationPreset(option.minutes);
+                    }}
+                    className={`rounded-lg border px-3.5 py-2 text-xs font-semibold transition ${durationType === "preset" && durationPreset === option.minutes ? "border-[#35d6a5] bg-[#e9fbf4] text-[#006d51]" : "border-[#dce9df] bg-white text-[#658276] hover:border-[#8EB69B]"}`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
                 <button
                   type="button"
                   onClick={() => setDurationType("custom")}
-                  className={`py-1.5 px-3 border rounded-md text-xs font-medium cursor-pointer transition-colors ${
-                    durationType === "custom"
-                      ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold"
-                      : "border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50"
-                  }`}
+                  className={`rounded-lg border px-3.5 py-2 text-xs font-semibold transition ${durationType === "custom" ? "border-[#35d6a5] bg-[#e9fbf4] text-[#006d51]" : "border-[#dce9df] bg-white text-[#658276] hover:border-[#8EB69B]"}`}
                 >
                   Custom
                 </button>
               </div>
-
               {durationType === "custom" && (
-                <div className="flex items-center gap-2 mt-2">
+                <div className="mt-3 flex items-center gap-2">
                   <input
                     type="number"
                     min={15}
                     max={10080}
                     value={customMinutes}
-                    onChange={(e) => setCustomMinutes(Number(e.target.value))}
-                    className="w-32 text-xs p-2 rounded-md border border-neutral-300 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                    onChange={(event) =>
+                      setCustomMinutes(Number(event.target.value))
+                    }
+                    className="w-32 rounded-lg border border-[#cbdacf] bg-[#fbfdfb] px-3 py-2 text-sm text-[#163B32] outline-none focus:border-[#008c68] focus:ring-4 focus:ring-[#DAF1DE]"
                   />
-                  <span className="text-xs text-neutral-500">minutes (15 to 10080)</span>
+                  <span className="text-xs text-[#658276]">
+                    minutes (15 to 10,080)
+                  </span>
                 </div>
               )}
             </div>
 
-            {/* Optional Reservation ID */}
             <div>
-              <label htmlFor="reservation-id" className="block text-xs font-semibold text-neutral-700 mb-1">
-                Pre-Booking Confirmation ID (Optional)
+              <p className="mb-2 text-sm font-bold text-[#163B32]">
+                Vehicle classification <span className="text-[#c44935]">*</span>
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {vehicleTypes.map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setVehicleType(id)}
+                    className={`flex min-h-[86px] flex-col items-start justify-between rounded-xl border p-3 text-left transition ${vehicleType === id ? "border-[#00a274] bg-[#effcf7] text-[#006d51] shadow-[inset_0_0_0_1px_#00a274]" : "border-[#dce9df] bg-[#fbfdfb] text-[#658276] hover:border-[#8EB69B]"}`}
+                  >
+                    <Icon className="size-5" />
+                    <span className="text-xs font-bold">{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-3 border-t border-[#edf3ee] pt-5 md:grid-cols-[1fr_auto] md:items-end">
+            <div>
+              <label
+                htmlFor="reservation-id"
+                className="mb-2 block text-sm font-bold text-[#163B32]"
+              >
+                Pre-booking confirmation{" "}
+                <span className="font-normal text-[#8aa096]">(optional)</span>
               </label>
               <input
                 id="reservation-id"
                 type="text"
                 value={reservationId}
-                onChange={(e) => setReservationId(e.target.value)}
-                placeholder="Leave blank for on-the-spot gate walk-in"
-                className="w-full text-xs p-2.5 rounded-lg border border-neutral-300 focus:outline-none focus:ring-1 focus:ring-emerald-600 font-mono"
-              />
-              <span className="text-[11px] text-neutral-400 mt-1 block">
-                If driver reserved beforehand through the member app, entering confirmation ID links the session.
-              </span>
-            </div>
+                onChange={(event) => setReservationId(event.target.value)}
 
-            {/* Actions */}
-            <div className="flex items-center gap-2.5 pt-2">
+                placeholder="Leave blank for a gate walk-in"
+                className="w-full rounded-xl border border-[#dce9df] bg-[#fbfdfb] px-4 py-3 text-sm text-[#163B32] outline-none transition placeholder:text-[#a1afa7] focus:border-[#008c68] focus:ring-4 focus:ring-[#DAF1DE]"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={resetForm}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#dce9df] px-4 py-3 text-sm font-semibold text-[#658276] transition hover:bg-[#f4f8f5]"
+              >
+                <RotateCcw className="size-4" /> Reset
+              </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 text-white font-medium text-xs rounded-lg transition-colors cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#00845f] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_18px_rgba(0,132,95,0.18)] transition hover:bg-[#006d51] disabled:cursor-wait disabled:opacity-70"
               >
-                {loading ? <Loader2 size={16} className="animate-spin" /> : <DoorOpen size={16} />}
-                <span>{loading ? "Allocating Bay…" : "Assign Bay & Record Entry"}</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleReset}
-                className="h-10 px-4 rounded-lg border border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50 transition-colors font-medium text-xs cursor-pointer"
-              >
-                Reset
+                {loading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <DoorOpen className="size-4" />
+                )}
+                {loading ? "Allocating…" : "Assign bay"}
               </button>
             </div>
-          </form>
-        </div>
-      )}
+          </div>
+        </form>
+      </section>
+      <p className="flex items-center gap-2 text-xs text-[#658276]">
+        <Clock3 className="size-3.5" /> Entry time is recorded when the
+        allocation is confirmed.
+      </p>
     </div>
   );
 }
 
 export default function EntryGatePage() {
   return (
-    <Suspense fallback={<div className="min-h-[300px] flex flex-col items-center justify-center gap-3 text-neutral-400 text-sm"><Loader2 size={24} className="animate-spin text-emerald-700" /><p>Loading gate form…</p></div>}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-[300px] flex-col items-center justify-center gap-3 text-sm text-neutral-400">
+          <Loader2 size={24} className="animate-spin text-emerald-700" />
+          <p>Loading gate form…</p>
+        </div>
+      }
+    >
       <EntryForm />
     </Suspense>
   );

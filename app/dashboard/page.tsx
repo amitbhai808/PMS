@@ -16,6 +16,12 @@ import {
   AlertTriangle,
   Clock,
   Layers,
+  Gauge,
+  WalletCards,
+  Ticket,
+  Clock3,
+  ArrowUpRight,
+  type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { apiGet } from "@/lib/client-api";
@@ -49,6 +55,45 @@ type ZoneData = {
   clearanceHeight?: number | null;
   _count?: { slots: number };
 };
+
+function StatCard({
+  label,
+  value,
+  change,
+  icon: Icon,
+  accent,
+  note,
+}: {
+  label: string;
+  value: string;
+  change: string;
+  icon: LucideIcon;
+  accent: "dark" | "light" | "pale" | "outline";
+  note: string;
+}) {
+  const styles = {
+    dark: "bg-[#235347] text-[#DAF1DE]",
+    light: "bg-[#8EB69B] text-[#051F20]",
+    pale: "bg-[#DAF1DE] text-[#163B32]",
+    outline: "border border-[#dce9df] bg-white text-[#163B32]",
+  };
+  return (
+    <div className={`rounded-2xl p-5 ${styles[accent]}`}>
+      <div className="mb-5 flex items-start justify-between">
+        <span className="text-xs font-semibold opacity-75">{label}</span>
+        <Icon className="size-[18px] opacity-70" />
+      </div>
+      <div className="flex items-end gap-2">
+        <span className="text-3xl font-bold tracking-[-0.05em]">{value}</span>
+        <span className="mb-1 flex items-center text-[11px] font-bold opacity-75">
+          <ArrowUpRight className="size-3" />
+          {change}
+        </span>
+      </div>
+      <p className="mt-2 text-[11px] opacity-65">{note}</p>
+    </div>
+  );
+}
 
 export default function DashboardOverviewPage() {
   const { user } = useAuth();
@@ -134,82 +179,16 @@ export default function DashboardOverviewPage() {
       </div>
 
       {/* KPI Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
-        {/* Occupancy Rate */}
-        <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-neutral-400 font-bold tracking-wider uppercase">Live Occupancy</span>
-            <Activity size={16} className="text-emerald-700" />
-          </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-neutral-800 tracking-tight mt-1">{occupancyPercent}%</div>
-          <div className="text-[11px] text-neutral-400 mt-1">
-            {occupiedSlotsCount} of {totalSlotsCount} general slots filled
-          </div>
-        </div>
 
-        {/* Available Bays */}
-        <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-neutral-400 font-bold tracking-wider uppercase">Available Bays</span>
-            <CheckCircle2 size={16} className="text-emerald-600" />
-          </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-emerald-700 tracking-tight mt-1">{availableSlotsCount}</div>
-          <div className="text-[11px] text-neutral-400 mt-1">
-            Ready for instant gate check-in
-          </div>
-        </div>
 
-        {/* Active Vehicles On-Site */}
-        <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-neutral-400 font-bold tracking-wider uppercase">Parked Vehicles</span>
-            <CarFront size={16} className="text-blue-600" />
-          </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-blue-700 tracking-tight mt-1">
-            {activeBookings.length > 0 ? activeBookings.length : occupiedSlotsCount}
-          </div>
-          <div className="text-[11px] text-neutral-400 mt-1">
-            {overdueBookingsCount > 0 ? (
-              <span className="text-red-600 font-semibold flex items-center gap-1">
-                <AlertTriangle size={12} /> {overdueBookingsCount} overdue
-              </span>
-            ) : (
-              "All active sessions on schedule"
-            )}
-          </div>
-        </div>
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
+        <StatCard label="Live occupancy" value="68.4%" change="+4.2%" icon={Gauge} accent="dark" note="121 of 184 slots" />
+        <StatCard label="Today’s revenue" value="₹150" change="+12.8%" icon={WalletCards} accent="light" note="vs ₹43,080 yesterday" />
+        <StatCard label="Active bookings" value="37" change="+6" icon={Ticket} accent="pale" note="12 arriving soon" />
+        <StatCard label="Avg. parking time" value="2h 18m" change="-8.4%" icon={Clock3} accent="outline" note="vs 2h 31m last week" />
+      </section>
 
-        {/* Revenue or Shadow Pool */}
-        {isSuperAdmin && revenueData ? (
-          <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-neutral-400 font-bold tracking-wider uppercase">Settled Revenue</span>
-              <CircleDollarSign size={16} className="text-purple-600" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-purple-700 tracking-tight mt-1">
-              ₹{revenueData.liveRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-            </div>
-            <div className="text-[11px] text-neutral-400 mt-1">
-              {revenueData.bookings.COMPLETED} completed departures
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-neutral-400 font-bold tracking-wider uppercase">Special Bays</span>
-              <Layers3 size={16} className="text-amber-600" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-neutral-800 tracking-tight mt-1">
-              {shadowSlotsCount} <span className="text-sm font-normal text-neutral-500">shadow</span>
-            </div>
-            <div className="text-[11px] text-neutral-400 mt-1">
-              {maintenanceSlotsCount} bays under maintenance
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Quick Action Gate Launcher */}
+      {/* Quick Action Gate Launcher
       <div className="bg-white border border-emerald-200/80 rounded-xl p-5 mb-6 shadow-xs bg-gradient-to-r from-emerald-50/50 to-neutral-50">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -271,7 +250,7 @@ export default function DashboardOverviewPage() {
             </div>
           </Link>
         </div>
-      </div>
+      </div> */}
 
       {/* Zone Capacity Cards */}
       <div className="bg-white border border-neutral-200 rounded-xl p-5 mb-6 shadow-xs">
@@ -323,9 +302,8 @@ export default function DashboardOverviewPage() {
                   </div>
                   <div className="w-full h-1.5 bg-neutral-200 rounded-full overflow-hidden">
                     <div
-                      className={`h-full transition-all duration-500 ${
-                        pct > 85 ? "bg-red-500" : pct > 60 ? "bg-amber-500" : "bg-emerald-600"
-                      }`}
+                      className={`h-full transition-all duration-500 ${pct > 85 ? "bg-red-500" : pct > 60 ? "bg-amber-500" : "bg-emerald-600"
+                        }`}
                       style={{ width: `${pct}%` }}
                     />
                   </div>

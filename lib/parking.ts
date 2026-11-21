@@ -118,7 +118,7 @@ export function feeForVisit(
   const actualMinutes = Math.max(1, Math.ceil((actualExit.getTime() - actualEntry.getTime()) / 60_000));
   const overstayMinutes = Math.max(0, Math.ceil((actualExit.getTime() - expectedExit.getTime()) / 60_000));
   const normalMinutes = Math.max(0, actualMinutes - overstayMinutes);
-  const graceMinutes = overstayMinutes === 0 ? Math.min(5, normalMinutes) : 0;
+  const graceMinutes = overstayMinutes === 0 ? Math.min(1, normalMinutes) : 0;
   const perMinute = hourlyRate / 60;
   const baseFeePaise = Math.ceil(Math.max(0, normalMinutes - graceMinutes) * perMinute + overstayMinutes * perMinute);
   const penaltyMultiplier = serverEnv().OVERSTAY_PENALTY_MULTIPLIER;

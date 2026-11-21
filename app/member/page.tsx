@@ -76,6 +76,15 @@ export default function MemberDashboardPage() {
     (b) => b.status === "COMPLETED" || b.status === "CANCELLED"
   );
 
+  const statusClass = (status: Booking["status"]) =>
+    status === "ACTIVE"
+      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+      : status === "PENDING"
+        ? "bg-amber-50 text-amber-700 border-amber-200"
+        : status === "COMPLETED"
+          ? "bg-blue-50 text-blue-700 border-blue-200"
+          : "bg-neutral-100 text-neutral-600 border-neutral-300";
+
   return (
     <div>
       {/* Welcome Banner */}
@@ -83,7 +92,7 @@ export default function MemberDashboardPage() {
         <h1 className="text-2xl font-bold text-neutral-900 tracking-tight">
           Welcome back, {user?.name ?? "Member"}
         </h1>
-        <p className="text-xs text-neutral-500 mt-1">
+        <p className="max-w-xl text-xs leading-5 text-neutral-500 mt-1">
           Manage your registered vehicles, bay reservations, and contactless digital wallet
         </p>
       </div>
@@ -98,6 +107,7 @@ export default function MemberDashboardPage() {
           </div>
           <div className="text-2xl font-bold tracking-tight mt-2 text-emerald-800">
             ₹{wallet?.balance.toFixed(2) ?? "0.00"}
+            {/* ₹192.42 */}
           </div>
           <div className="text-xs mt-1.5">
             <Link href="/member/wallet" className="text-emerald-700 font-semibold hover:underline">
@@ -136,10 +146,10 @@ export default function MemberDashboardPage() {
       </div>
 
       {/* Quick Action Shortcuts */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-7 sm:mb-8">
         <Link
           href="/member/reserve"
-          className="p-4 rounded-xl border border-emerald-300 bg-emerald-50/60 hover:bg-emerald-50 transition-colors flex items-center justify-between shadow-2xs"
+          className="min-h-20 p-4 rounded-xl border border-emerald-300 bg-emerald-50/60 hover:bg-emerald-50 transition-colors flex items-center justify-between shadow-2xs"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-emerald-700 text-white flex items-center justify-center">
@@ -155,7 +165,7 @@ export default function MemberDashboardPage() {
 
         <Link
           href="/member/vehicles"
-          className="p-4 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 transition-colors flex items-center justify-between shadow-2xs"
+          className="min-h-20 p-4 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 transition-colors flex items-center justify-between shadow-2xs"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-neutral-100 text-neutral-800 flex items-center justify-center">
@@ -171,7 +181,7 @@ export default function MemberDashboardPage() {
 
         <Link
           href="/member/wallet"
-          className="p-4 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 transition-colors flex items-center justify-between shadow-2xs"
+          className="min-h-20 p-4 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 transition-colors flex items-center justify-between shadow-2xs"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-neutral-100 text-neutral-800 flex items-center justify-center">
@@ -187,7 +197,7 @@ export default function MemberDashboardPage() {
       </div>
 
       {/* Active & Upcoming Sessions */}
-      <div className="bg-white border border-neutral-200 rounded-xl p-5 mb-8 shadow-xs">
+      <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 mb-8 shadow-xs">
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
           <div>
             <h3 className="text-sm font-bold text-neutral-900">Active & Upcoming Sessions</h3>
@@ -207,7 +217,24 @@ export default function MemberDashboardPage() {
             <p className="text-xs text-neutral-500">You don&apos;t have any vehicles parked or reserved right now.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="space-y-3 md:hidden">
+            {activeOrPending.map((b) => (
+              <article key={b.id} className="rounded-lg border border-neutral-200 p-3.5">
+                <div className="flex items-start justify-between gap-3">
+                  <span className="font-mono font-bold text-xs px-2 py-1 rounded bg-neutral-100 border border-neutral-300">{b.licensePlate}</span>
+                  <span className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${statusClass(b.status)}`}>{b.status}</span>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
+                  <div><p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">Bay</p><p className="mt-0.5 font-semibold text-emerald-800">{b.slot?.code ?? "Allocated at Gate"}</p>{b.slot?.zone && <p className="text-[11px] text-neutral-500">{b.slot.zone.name}</p>}</div>
+                  <div><p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">Schedule</p><p className="mt-0.5 font-medium text-neutral-800">{new Date(b.expectedEntry).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p><p className="text-[11px] text-neutral-500">to {new Date(b.expectedExit).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p></div>
+                </div>
+                {b.status === "PENDING" && <button type="button" onClick={() => handleCancelReservation(b.id)} className="mt-3 min-h-9 w-full text-xs text-red-700 hover:text-red-800 font-semibold border border-red-200 rounded-md bg-red-50/50 cursor-pointer">Cancel reservation</button>}
+                {b.status === "ACTIVE" && <p className="mt-3 text-xs text-emerald-700 font-semibold">Currently parked</p>}
+              </article>
+            ))}
+          </div>
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr>
@@ -241,15 +268,7 @@ export default function MemberDashboardPage() {
                       </div>
                     </td>
                     <td className="p-2.5 sm:px-3 align-middle">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${
-                        b.status === "ACTIVE"
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : b.status === "PENDING"
-                          ? "bg-amber-50 text-amber-700 border-amber-200"
-                          : b.status === "COMPLETED"
-                          ? "bg-blue-50 text-blue-700 border-blue-200"
-                          : "bg-neutral-100 text-neutral-600 border-neutral-300"
-                      }`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${statusClass(b.status)}`}>
                         {b.status}
                       </span>
                     </td>
@@ -272,12 +291,13 @@ export default function MemberDashboardPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
 
       {/* Past Completed Visits */}
       {pastBookings.length > 0 && (
-        <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
+        <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
             <div>
               <h3 className="text-sm font-bold text-neutral-900">Completed Parking History</h3>
@@ -285,7 +305,16 @@ export default function MemberDashboardPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="space-y-3 md:hidden">
+            {pastBookings.map((b) => (
+              <article key={b.id} className="rounded-lg border border-neutral-200 p-3.5">
+                <div className="flex items-start justify-between gap-3"><span className="font-mono font-bold text-xs">{b.licensePlate}</span><span className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${statusClass(b.status)}`}>{b.status}</span></div>
+                <div className="mt-3 grid grid-cols-2 gap-3 text-xs"><div><p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">Bay</p><p className="mt-0.5 font-semibold text-neutral-800">{b.slot?.code ?? "—"}</p></div><div><p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">Total paid</p><p className="mt-0.5 font-semibold text-neutral-900">{b.totalPaidPaise > 0 ? `₹${(b.totalPaidPaise / 100).toFixed(2)}` : "—"}</p></div></div>
+                <p className="mt-3 text-[11px] text-neutral-500">{new Date(b.actualExit ?? b.expectedExit).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}</p>
+              </article>
+            ))}
+          </div>
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr>
@@ -314,15 +343,7 @@ export default function MemberDashboardPage() {
                       </span>
                     </td>
                     <td className="p-2.5 sm:px-3 align-middle">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${
-                        b.status === "ACTIVE"
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : b.status === "PENDING"
-                          ? "bg-amber-50 text-amber-700 border-amber-200"
-                          : b.status === "COMPLETED"
-                          ? "bg-blue-50 text-blue-700 border-blue-200"
-                          : "bg-neutral-100 text-neutral-600 border-neutral-300"
-                      }`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${statusClass(b.status)}`}>
                         {b.status}
                       </span>
                     </td>

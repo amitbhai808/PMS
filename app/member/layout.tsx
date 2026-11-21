@@ -53,13 +53,13 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
     <div className="min-h-screen bg-[#f7f9f7] flex flex-col">
       {/* Member Navbar */}
       <header className="bg-white border-b border-neutral-200 sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-4 sm:gap-8">
             <Link href="/member" className="flex items-center gap-2.5 text-neutral-900 no-underline">
               <span className="w-8 h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center shadow-xs">
                 <CarFront size={18} />
               </span>
-              <div>
+              <div className="hidden min-[380px]:block">
                 <strong className="block text-sm font-bold tracking-tight">Parkwise</strong>
                 <small className="block text-[9px] font-bold text-neutral-400 tracking-wider uppercase -mt-0.5">
                   Member Portal
@@ -99,7 +99,8 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
               </Link>
             )}
 
-            <div className="flex items-center gap-2 pl-3 border-l border-neutral-200">
+            {/* avtar , name , logout button  */}
+            <div className="flex shrink-0 items-center gap-2 pl-2 sm:pl-3 border-l border-neutral-200">
               <span className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs font-bold">
                 {(user?.name || "Member").split(" ").filter(Boolean).map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
               </span>
@@ -118,7 +119,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
         </div>
 
         {/* Mobile Nav */}
-        <div className="md:hidden border-t border-neutral-100 flex overflow-x-auto px-4 py-1.5 gap-2">
+        <nav aria-label="Member navigation" className="md:hidden border-t border-neutral-100 flex overflow-x-auto px-4 py-1.5 gap-1.5 [scrollbar-width:none]">
           {memberNav.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -136,11 +137,11 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
               </Link>
             );
           })}
-        </div>
+        </nav>
       </header>
 
       {/* Main Container */}
-      <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 flex-1">
+      <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 py-5 sm:py-8 flex-1">
         {children}
       </main>
     </div>

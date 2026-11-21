@@ -61,7 +61,7 @@ export function SlotGrid({ slots, zoneName, onSelectSlot, selectedSlotId }: Slot
           <p className="m-0 text-[13px] text-neutral-500">No parking slots meet the selected filter criteria.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2.5 mt-4">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-3 mt-4">
           {slots.map((slot) => (
             <SlotCard
               key={slot.id}

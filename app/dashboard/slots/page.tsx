@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import Image from "next/image";
 import {
   RefreshCw,
   Search,
@@ -11,7 +12,7 @@ import {
 } from "lucide-react";
 import { apiGet, apiPost } from "@/lib/client-api";
 import { useToast } from "@/components/toast";
-import { Slot } from "@/components/parking/slot-card";
+import { Slot, getSlotVehicle } from "@/components/parking/slot-card";
 import { SlotGrid } from "@/components/parking/slot-grid";
 
 type Zone = {
@@ -148,11 +149,10 @@ export default function ParkingLayoutPage() {
           <div className="flex items-center gap-1.5 flex-wrap">
             <button
               onClick={() => setSelectedZoneId("ALL")}
-              className={`px-3 py-1.5 border rounded-md text-xs font-medium cursor-pointer transition-colors ${
-                selectedZoneId === "ALL"
+              className={`px-3 py-1.5 border rounded-md text-xs font-medium cursor-pointer transition-colors ${selectedZoneId === "ALL"
                   ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold"
                   : "border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50"
-              }`}
+                }`}
             >
               All Zones ({slots.length})
             </button>
@@ -163,11 +163,10 @@ export default function ParkingLayoutPage() {
                 <button
                   key={zone.id}
                   onClick={() => setSelectedZoneId(zone.id)}
-                  className={`px-3 py-1.5 border rounded-md text-xs font-medium cursor-pointer transition-colors ${
-                    active
+                  className={`px-3 py-1.5 border rounded-md text-xs font-medium cursor-pointer transition-colors ${active
                       ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold"
                       : "border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50"
-                  }`}
+                    }`}
                 >
                   {zone.name} ({count})
                 </button>
@@ -211,16 +210,40 @@ export default function ParkingLayoutPage() {
               <button
                 key={st}
                 onClick={() => setSelectedStatus(st)}
-                className={`py-1 px-2.5 text-xs border rounded-md font-medium cursor-pointer transition-colors ${
-                  active
+                className={`py-1 px-2.5 text-xs border rounded-md font-medium cursor-pointer transition-colors ${active
                     ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold"
                     : "border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50"
-                }`}
+                  }`}
               >
                 {st === "ALL" ? "All" : st.charAt(0) + st.slice(1).toLowerCase()}
               </button>
             );
           })}
+        </div>
+
+        {/* Vehicle Classification Visual Guide */}
+        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-neutral-100 flex-wrap text-xs text-neutral-500">
+          <span className="font-semibold text-neutral-700 text-[11px] uppercase tracking-wider">Parked Vehicle Visuals:</span>
+          <div className="flex items-center gap-1.5 bg-neutral-50 px-2 py-1 rounded-md border border-neutral-200">
+            <Image src="/vehicles/car.png" alt="Sedan" width={20} height={40} className="h-5 w-auto object-contain" unoptimized />
+            <span className="text-[11px] font-medium text-neutral-700">Sedan / 4-Wheeler</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-neutral-50 px-2 py-1 rounded-md border border-neutral-200">
+            <Image src="/vehicles/two-wheeler.png" alt="2-Wheeler" width={20} height={40} className="h-5 w-auto object-contain" unoptimized />
+            <span className="text-[11px] font-medium text-neutral-700">2-Wheeler</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-neutral-50 px-2 py-1 rounded-md border border-neutral-200">
+            <Image src="/vehicles/ev.png" alt="EV" width={20} height={40} className="h-5 w-auto object-contain" unoptimized />
+            <span className="text-[11px] font-medium text-neutral-700">Electric (EV)</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-neutral-50 px-2 py-1 rounded-md border border-neutral-200">
+            <Image src="/vehicles/suv.png" alt="SUV" width={20} height={40} className="h-5 w-auto object-contain" unoptimized />
+            <span className="text-[11px] font-medium text-neutral-700">SUV / Large</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-neutral-50 px-2 py-1 rounded-md border border-neutral-200">
+            <Image src="/vehicles/sports.png" alt="VIP" width={20} height={40} className="h-5 w-auto object-contain" unoptimized />
+            <span className="text-[11px] font-medium text-neutral-700">Sports / VIP</span>
+          </div>
         </div>
       </div>
 
@@ -292,6 +315,32 @@ export default function ParkingLayoutPage() {
                 <span className="font-semibold text-neutral-900">{selectedSlot.distanceToGate} meters</span>
               </div>
             </div>
+
+            {selectedSlot.status === "OCCUPIED" && (
+              <div className="mb-4 p-3 bg-rose-50/70 border border-rose-200 rounded-xl flex items-center gap-3.5">
+                <div className="w-16 h-16 bg-white rounded-lg border border-rose-100 flex items-center justify-center p-1 shadow-2xs shrink-0">
+                  <Image
+                    src={getSlotVehicle(selectedSlot).src}
+                    alt={getSlotVehicle(selectedSlot).alt}
+                    width={40}
+                    height={80}
+                    className="h-14 w-auto object-contain drop-shadow"
+                    unoptimized
+                  />
+                </div>
+                <div>
+                  <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-rose-700 bg-rose-100/80 px-1.5 py-0.5 rounded mb-0.5">
+                    Currently Parked
+                  </span>
+                  <div className="text-xs font-bold text-neutral-900">
+                    {getSlotVehicle(selectedSlot).name} Detected
+                  </div>
+                  <div className="text-[11px] text-neutral-500">
+                    Physical bay occupancy registered at gate or sensor.
+                  </div>
+                </div>
+              </div>
+            )}
 
             {overrideError && (
               <div className="p-3 px-3.5 mb-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs font-medium">{overrideError}</div>

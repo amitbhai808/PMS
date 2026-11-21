@@ -85,7 +85,7 @@ export function BookingRow({ booking, onCancel }: BookingRowProps) {
   };
 
   return (
-    <tr className={`border-b border-neutral-100 transition-colors ${isOverdue ? "bg-red-50/70 hover:bg-red-50" : "hover:bg-neutral-50/80"}`}>
+    <tr className={`border-b border-neutral-100 transition-colors ${isOverdue ? "bg-red-100/70 hover:bg-red-50" : "hover:bg-neutral-50/80"}`}>
       {/* Plate & Type */}
       <td className="p-2.5 sm:px-3 sm:py-2.5 align-middle">
         <div className="flex items-center gap-2">
@@ -175,7 +175,7 @@ export function BookingRow({ booking, onCancel }: BookingRowProps) {
             <>
               <Link
                 href={`/dashboard/exit?plate=${encodeURIComponent(booking.licensePlate)}`}
-                className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded bg-neutral-900 text-white hover:bg-neutral-800 transition-colors"
+                className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded text-black  bg-gray-500/40 hover:bg-gray-500/90 hover:text-white "
                 title="Process vehicle departure"
               >
                 <DoorClosed size={12} /> Exit

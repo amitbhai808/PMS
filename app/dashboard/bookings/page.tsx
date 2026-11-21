@@ -5,16 +5,14 @@ import {
   CarFront,
   RefreshCw,
   Search,
-  Filter,
-  AlertTriangle,
-  CalendarCheck,
-  CheckCircle,
-  XCircle,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
 import { apiGet, apiDelete } from "@/lib/client-api";
 import { useToast } from "@/components/toast";
 import { Booking, BookingRow } from "@/components/parking/booking-row";
+
+const PAGE_SIZE = 5;
 
 export default function BookingsListPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -23,26 +21,34 @@ export default function BookingsListPage() {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [onlyOverdue, setOnlyOverdue] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
 
   const { toast } = useToast();
 
-  const loadBookings = useCallback(async () => {
-    setRefreshing(true);
-    const url = statusFilter === "ALL"
-      ? "/api/bookings?take=100"
-      : `/api/bookings?take=100&status=${statusFilter}`;
-
-    const res = await apiGet<{ bookings: Booking[] }>(url);
+  const loadBookings = useCallback(async (offset = 0, append = false, take = PAGE_SIZE) => {
+    if (append) setLoadingMore(true);
+    else setRefreshing(true);
+    const params = new URLSearchParams({ take: String(take), offset: String(offset) });
+    if (statusFilter !== "ALL") params.set("status", statusFilter);
+    const res = await apiGet<{ bookings: Booking[]; hasMore: boolean }>(`/api/bookings?${params}`);
     if (res.ok) {
-      setBookings(res.data.bookings);
+      setBookings((current) => append ? [...current, ...res.data.bookings] : res.data.bookings);
+      setHasMore(res.data.hasMore);
     }
     setLoading(false);
     setRefreshing(false);
+    setLoadingMore(false);
   }, [statusFilter]);
 
   useEffect(() => {
-    loadBookings();
+    void loadBookings();
   }, [loadBookings]);
+
+  const refreshBookings = async () => {
+    // Keep the operator's expanded list after a refresh; only route/filter changes start at five.
+    await loadBookings(0, false, Math.max(PAGE_SIZE, bookings.length));
+  };
 
   const handleCancelReservation = async (bookingId: string) => {
     if (!confirm("Are you sure you want to cancel this pending reservation?")) {
@@ -56,7 +62,7 @@ export default function BookingsListPage() {
     }
 
     toast("Reservation successfully cancelled", "success");
-    await loadBookings();
+    await refreshBookings();
   };
 
   const filteredBookings = useMemo(() => {
@@ -93,7 +99,7 @@ export default function BookingsListPage() {
         </div>
 
         <button
-          onClick={loadBookings}
+          onClick={() => void refreshBookings()}
           disabled={refreshing}
           className="px-3.5 py-1.5 border border-neutral-300 rounded-md bg-white text-neutral-600 text-xs font-medium cursor-pointer hover:bg-neutral-50 transition-colors flex items-center gap-1.5"
         >
@@ -113,11 +119,10 @@ export default function BookingsListPage() {
                 <button
                   key={st}
                   onClick={() => setStatusFilter(st)}
-                  className={`px-3 py-1.5 border rounded-md text-xs font-medium cursor-pointer transition-colors ${
-                    active
-                      ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold"
-                      : "border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50"
-                  }`}
+                  className={`px-3 py-1.5 border rounded-md text-xs font-medium cursor-pointer transition-colors ${active
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold"
+                    : "border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50"
+                    }`}
                 >
                   {st === "ALL" ? "All Bookings" : st.charAt(0) + st.slice(1).toLowerCase()}
                 </button>
@@ -157,7 +162,8 @@ export default function BookingsListPage() {
       <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-[15px] font-semibold text-neutral-800 m-0">Records ({filteredBookings.length})</h3>
+            {/* <h3 className="text-[15px] font-semibold text-neutral-800 m-0">Records ({filteredBookings.length})</h3> */}
+            <h3 className="text-[15px] font-semibold text-neutral-800 m-0">Loaded records ({bookings.length})</h3>
             <p className="text-[11px] text-neutral-500 mt-0.5 m-0">Sorted by most recent entry/booking creation</p>
           </div>
         </div>
@@ -175,7 +181,7 @@ export default function BookingsListPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-xs">
+            <table className="w-full border-collapse flex flex-col text-left text-xs">
               <thead>
                 <tr>
                   <th className="text-left p-2.5 sm:px-3 text-neutral-500 font-semibold text-[11px] uppercase tracking-wider border-b border-neutral-200 bg-neutral-50/70">Vehicle Plate</th>
@@ -197,6 +203,19 @@ export default function BookingsListPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+        {!loading  && hasMore && (
+          <div className="mt-5 flex justify-center border-t border-neutral-100 pt-5">
+            <button
+              type="button"
+              onClick={() => void loadBookings(bookings.length, true)}
+              disabled={loadingMore}
+              className="inline-flex min-w-40 items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs font-semibold text-emerald-800 transition-colors hover:bg-emerald-100 disabled:cursor-wait disabled:opacity-70"
+            >
+              {loadingMore ? <Loader2 size={15} className="animate-spin" /> : <ChevronDown size={15} />}
+              {loadingMore ? "Loading…" : "Load 5 more"}
+            </button>
           </div>
         )}
       </div>

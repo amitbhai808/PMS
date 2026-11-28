@@ -18,7 +18,8 @@ export async function POST(request: NextRequest) {
         phone: input.data.phone,
         passwordHash,
         role: "MEMBER",
-        wallet: { create: { currency: "INR" } },
+        // Demo credit: the app does not process real payments yet.
+        wallet: { create: { currency: "INR", balancePaise: 100_000 } },
       },
       select: { id: true, name: true, email: true, role: true },
     });

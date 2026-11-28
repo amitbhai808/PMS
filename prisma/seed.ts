@@ -5,6 +5,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL ?? "" });
 const prisma = new PrismaClient({ adapter });
+const DEMO_MEMBER_WALLET_BALANCE_PAISE = 100_000;
 
 async function ensureUser(input: {
   email: string;
@@ -20,8 +21,12 @@ async function ensureUser(input: {
   });
   await prisma.wallet.upsert({
     where: { userId: user.id },
-    create: { userId: user.id, currency: "INR" },
-    update: {},
+    create: {
+      userId: user.id,
+      currency: "INR",
+      ...(input.role === "MEMBER" ? { balancePaise: DEMO_MEMBER_WALLET_BALANCE_PAISE } : {}),
+    },
+    update: input.role === "MEMBER" ? { balancePaise: DEMO_MEMBER_WALLET_BALANCE_PAISE } : {},
   });
   return user;
 }
@@ -53,6 +58,10 @@ async function main() {
     name: "Parking Member",
     role: "MEMBER",
     password: memberPassword,
+  });
+  await prisma.wallet.updateMany({
+    where: { user: { role: "MEMBER" } },
+    data: { balancePaise: DEMO_MEMBER_WALLET_BALANCE_PAISE },
   });
 
   const zones = [

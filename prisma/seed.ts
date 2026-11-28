@@ -53,7 +53,7 @@ async function main() {
     role: "OPERATOR",
     password: operatorPassword,
   });
-  await ensureUser({
+  const member = await ensureUser({
     email: process.env.SEED_MEMBER_EMAIL ?? "member@pms.local",
     name: "Parking Member",
     role: "MEMBER",
@@ -115,7 +115,121 @@ async function main() {
     update: {},
   });
 
-  console.log(`Seeded ${zones.length} zones, ${globalIndex} slots, and initial admin/operator/member accounts.`);
+  const demoVehicles = [
+    { licensePlate: "GJ01DEMO1", type: "FOUR_WHEELER" },
+    { licensePlate: "GJ01DEMO2", type: "SUV" },
+    { licensePlate: "GJ01LIVE1", type: "FOUR_WHEELER" },
+    { licensePlate: "GJ01LIVE2", type: "EV" },
+    { licensePlate: "GJ01BOOK1", type: "TWO_WHEELER" },
+  ];
+  for (const vehicle of demoVehicles) {
+    await prisma.vehicle.upsert({
+      where: { licensePlate: vehicle.licensePlate },
+      create: { ...vehicle, ownerId: member.id },
+      update: { type: vehicle.type, ownerId: member.id },
+    });
+  }
+
+  const now = new Date();
+  const hour = 60 * 60 * 1000;
+  const slotByCode = new Map(
+    await Promise.all(
+      ["B1-A06", "G-A06", "G-A07", "L1-A06", "L1-A07"].map(async (code) => {
+        const slot = await prisma.slot.findUniqueOrThrow({ where: { code } });
+        return [code, slot] as const;
+      }),
+    ),
+  );
+  const demoBookings = [
+    {
+      key: "demo-completed-001",
+      vehicle: "GJ01DEMO1",
+      slotCode: "G-A06",
+      status: "COMPLETED",
+      expectedEntry: new Date(now.getTime() - 30 * hour),
+      expectedExit: new Date(now.getTime() - 27 * hour),
+      actualEntry: new Date(now.getTime() - 30 * hour),
+      actualExit: new Date(now.getTime() - 27 * hour),
+      totalPaidPaise: 15_000,
+      paymentStatus: "PAID",
+    },
+    {
+      key: "demo-completed-002",
+      vehicle: "GJ01DEMO2",
+      slotCode: "G-A07",
+      status: "COMPLETED",
+      expectedEntry: new Date(now.getTime() - 12 * hour),
+      expectedExit: new Date(now.getTime() - 8 * hour),
+      actualEntry: new Date(now.getTime() - 12 * hour),
+      actualExit: new Date(now.getTime() - 8 * hour),
+      totalPaidPaise: 17_500,
+      paymentStatus: "PAID",
+    },
+    {
+      key: "demo-active-001",
+      vehicle: "GJ01LIVE1",
+      slotCode: "B1-A06",
+      status: "ACTIVE",
+      expectedEntry: new Date(now.getTime() - hour),
+      expectedExit: new Date(now.getTime() + hour),
+      actualEntry: new Date(now.getTime() - hour),
+      actualExit: null,
+      totalPaidPaise: 0,
+      paymentStatus: "UNPAID",
+    },
+    {
+      key: "demo-active-002",
+      vehicle: "GJ01LIVE2",
+      slotCode: "L1-A06",
+      status: "ACTIVE",
+      expectedEntry: new Date(now.getTime() - 2 * hour),
+      expectedExit: new Date(now.getTime() + 30 * 60 * 1000),
+      actualEntry: new Date(now.getTime() - 2 * hour),
+      actualExit: null,
+      totalPaidPaise: 0,
+      paymentStatus: "UNPAID",
+    },
+    {
+      key: "demo-pending-001",
+      vehicle: "GJ01BOOK1",
+      slotCode: "L1-A07",
+      status: "PENDING",
+      expectedEntry: new Date(now.getTime() + 2 * hour),
+      expectedExit: new Date(now.getTime() + 4 * hour),
+      actualEntry: null,
+      actualExit: null,
+      totalPaidPaise: 0,
+      paymentStatus: "UNPAID",
+    },
+  ] as const;
+  for (const booking of demoBookings) {
+    const slot = slotByCode.get(booking.slotCode);
+    if (!slot) throw new Error(`Missing demo slot ${booking.slotCode}`);
+    await prisma.booking.upsert({
+      where: { idempotencyKey: booking.key },
+      create: {
+        userId: member.id,
+        licensePlate: booking.vehicle,
+        slotId: slot.id,
+        status: booking.status,
+        expectedEntry: booking.expectedEntry,
+        expectedExit: booking.expectedExit,
+        actualEntry: booking.actualEntry,
+        actualExit: booking.actualExit,
+        hourlyRatePaise: 5_000,
+        baseFeePaise: booking.totalPaidPaise,
+        totalPaidPaise: booking.totalPaidPaise,
+        paymentStatus: booking.paymentStatus,
+        idempotencyKey: booking.key,
+      },
+      update: {},
+    });
+    if (booking.status === "ACTIVE") {
+      await prisma.slot.update({ where: { id: slot.id }, data: { status: "OCCUPIED" } });
+    }
+  }
+
+  console.log(`Seeded ${zones.length} zones, ${globalIndex} slots, demo bookings, and initial admin/operator/member accounts.`);
 }
 
 main()

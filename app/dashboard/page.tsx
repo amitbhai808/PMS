@@ -3,24 +3,14 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import {
-  Activity,
   CarFront,
-  CircleDollarSign,
   Layers3,
   RefreshCw,
-  DoorOpen,
-  DoorClosed,
-  ShieldAlert,
   ArrowRight,
-  CheckCircle2,
-  AlertTriangle,
   Clock,
-  Layers,
   Gauge,
   WalletCards,
   Ticket,
-  Clock3,
-  ArrowUpRight,
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
@@ -59,14 +49,12 @@ type ZoneData = {
 function StatCard({
   label,
   value,
-  change,
   icon: Icon,
   accent,
   note,
 }: {
   label: string;
   value: string;
-  change: string;
   icon: LucideIcon;
   accent: "dark" | "light" | "pale" | "outline";
   note: string;
@@ -83,13 +71,7 @@ function StatCard({
         <span className="text-xs font-semibold opacity-75">{label}</span>
         <Icon className="size-[18px] opacity-70" />
       </div>
-      <div className="flex items-end gap-2">
-        <span className="text-3xl font-bold tracking-[-0.05em]">{value}</span>
-        <span className="mb-1 flex items-center text-[11px] font-bold opacity-75">
-          <ArrowUpRight className="size-3" />
-          {change}
-        </span>
-      </div>
+      <span className="text-3xl font-bold tracking-[-0.05em]">{value}</span>
       <p className="mt-2 text-[11px] opacity-65">{note}</p>
     </div>
   );
@@ -182,10 +164,34 @@ export default function DashboardOverviewPage() {
 
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
-        <StatCard label="Live occupancy" value="68.4%" change="+4.2%" icon={Gauge} accent="dark" note="121 of 184 slots" />
-        <StatCard label="Today’s revenue" value="₹150" change="+12.8%" icon={WalletCards} accent="light" note="vs ₹43,080 yesterday" />
-        <StatCard label="Active bookings" value="37" change="+6" icon={Ticket} accent="pale" note="12 arriving soon" />
-        <StatCard label="Avg. parking time" value="2h 18m" change="-8.4%" icon={Clock3} accent="outline" note="vs 2h 31m last week" />
+        <StatCard
+          label="Live occupancy"
+          value={loading ? "…" : `${occupancyPercent}%`}
+          icon={Gauge}
+          accent="dark"
+          note={loading ? "Loading facility capacity" : `${occupiedSlotsCount} occupied · ${totalSlotsCount} operational bays`}
+        />
+        <StatCard
+          label="Settled revenue"
+          value={revenueData ? `₹${revenueData.liveRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—"}
+          icon={WalletCards}
+          accent="light"
+          note={isSuperAdmin ? "Paid parking sessions" : "Available to SuperAdmin accounts"}
+        />
+        <StatCard
+          label="Active bookings"
+          value={loading ? "…" : String(revenueData?.bookings.ACTIVE ?? activeBookings.length)}
+          icon={Ticket}
+          accent="pale"
+          note={loading ? "Loading live sessions" : `${overdueBookingsCount} overdue exit${overdueBookingsCount === 1 ? "" : "s"}`}
+        />
+        <StatCard
+          label="Available bays"
+          value={loading ? "…" : String(availableSlotsCount)}
+          icon={Layers3}
+          accent="outline"
+          note={loading ? "Loading bay availability" : `${maintenanceSlotsCount} under maintenance · ${shadowSlotsCount} overflow`}
+        />
       </section>
 
       {/* Quick Action Gate Launcher

@@ -9,7 +9,7 @@ const prisma = new PrismaClient({ adapter });
 async function ensureUser(input: {
   email: string;
   name: string;
-  role: "SUPERADMIN" | "OPERATOR";
+  role: "SUPERADMIN" | "OPERATOR" | "MEMBER";
   password: string;
 }) {
   const passwordHash = await bcrypt.hash(input.password, 12);
@@ -29,8 +29,11 @@ async function ensureUser(input: {
 async function main() {
   const adminPassword = process.env.SEED_ADMIN_PASSWORD;
   const operatorPassword = process.env.SEED_OPERATOR_PASSWORD;
-  if (!adminPassword || !operatorPassword) {
-    throw new Error("Set SEED_ADMIN_PASSWORD and SEED_OPERATOR_PASSWORD before seeding");
+  const memberPassword = process.env.SEED_MEMBER_PASSWORD;
+  if (!adminPassword || !operatorPassword || !memberPassword) {
+    throw new Error(
+      "Set SEED_ADMIN_PASSWORD, SEED_OPERATOR_PASSWORD, and SEED_MEMBER_PASSWORD before seeding",
+    );
   }
 
   const admin = await ensureUser({
@@ -44,6 +47,12 @@ async function main() {
     name: "Parking Operator",
     role: "OPERATOR",
     password: operatorPassword,
+  });
+  await ensureUser({
+    email: process.env.SEED_MEMBER_EMAIL ?? "member@pms.local",
+    name: "Parking Member",
+    role: "MEMBER",
+    password: memberPassword,
   });
 
   const zones = [
@@ -97,7 +106,7 @@ async function main() {
     update: {},
   });
 
-  console.log(`Seeded ${zones.length} zones, ${globalIndex} slots, and initial admin/operator accounts.`);
+  console.log(`Seeded ${zones.length} zones, ${globalIndex} slots, and initial admin/operator/member accounts.`);
 }
 
 main()

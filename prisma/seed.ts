@@ -1,9 +1,9 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "../generated/prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? "file:./dev.db" });
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL ?? "" });
 const prisma = new PrismaClient({ adapter });
 
 async function ensureUser(input: {
@@ -16,7 +16,7 @@ async function ensureUser(input: {
   const user = await prisma.user.upsert({
     where: { email: input.email },
     create: { email: input.email, name: input.name, role: input.role, passwordHash },
-    update: { name: input.name, role: input.role },
+    update: { name: input.name, role: input.role, passwordHash },
   });
   await prisma.wallet.upsert({
     where: { userId: user.id },

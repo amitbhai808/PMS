@@ -6,17 +6,17 @@ CREATE TABLE "User" (
     "phone" TEXT,
     "passwordHash" TEXT NOT NULL,
     "role" TEXT NOT NULL DEFAULT 'MEMBER',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
 );
 
 -- CreateTable
 CREATE TABLE "Session" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
-    "expiresAt" DATETIME NOT NULL,
-    "revokedAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "revokedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -26,7 +26,7 @@ CREATE TABLE "Wallet" (
     "balancePaise" INTEGER NOT NULL DEFAULT 0,
     "currency" TEXT NOT NULL DEFAULT 'INR',
     "userId" TEXT NOT NULL,
-    "updatedAt" DATETIME NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Wallet_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -38,7 +38,7 @@ CREATE TABLE "WalletTransaction" (
     "type" TEXT NOT NULL,
     "reference" TEXT,
     "description" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "WalletTransaction_walletId_fkey" FOREIGN KEY ("walletId") REFERENCES "Wallet" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -47,7 +47,7 @@ CREATE TABLE "Vehicle" (
     "licensePlate" TEXT NOT NULL PRIMARY KEY,
     "type" TEXT NOT NULL,
     "ownerId" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "Vehicle_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
@@ -57,8 +57,8 @@ CREATE TABLE "Zone" (
     "name" TEXT NOT NULL,
     "level" INTEGER NOT NULL,
     "isCovered" BOOLEAN NOT NULL DEFAULT true,
-    "clearanceHeight" REAL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "clearanceHeight" DOUBLE PRECISION,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- CreateTable
@@ -83,18 +83,18 @@ CREATE TABLE "Booking" (
     "userId" TEXT,
     "licensePlate" TEXT NOT NULL,
     "slotId" TEXT NOT NULL,
-    "expectedEntry" DATETIME NOT NULL,
-    "expectedExit" DATETIME NOT NULL,
-    "actualEntry" DATETIME,
-    "actualExit" DATETIME,
+    "expectedEntry" TIMESTAMP(3) NOT NULL,
+    "expectedExit" TIMESTAMP(3) NOT NULL,
+    "actualEntry" TIMESTAMP(3),
+    "actualExit" TIMESTAMP(3),
     "hourlyRatePaise" INTEGER NOT NULL,
     "baseFeePaise" INTEGER NOT NULL DEFAULT 0,
     "penaltyFeePaise" INTEGER NOT NULL DEFAULT 0,
     "totalPaidPaise" INTEGER NOT NULL DEFAULT 0,
     "paymentStatus" TEXT NOT NULL DEFAULT 'UNPAID',
     "idempotencyKey" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Booking_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "Booking_licensePlate_fkey" FOREIGN KEY ("licensePlate") REFERENCES "Vehicle" ("licensePlate") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Booking_slotId_fkey" FOREIGN KEY ("slotId") REFERENCES "Slot" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
@@ -107,7 +107,7 @@ CREATE TABLE "ReassignmentEvent" (
     "fromSlotCode" TEXT NOT NULL,
     "toSlotCode" TEXT NOT NULL,
     "reason" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "ReassignmentEvent_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "Booking" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -119,7 +119,7 @@ CREATE TABLE "AuditLog" (
     "entityType" TEXT NOT NULL,
     "entityId" TEXT NOT NULL,
     "details" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "AuditLog_actorUserId_fkey" FOREIGN KEY ("actorUserId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 

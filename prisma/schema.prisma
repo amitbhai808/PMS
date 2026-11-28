@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 // SQLite stores these values as text. Validate them with the Zod enums in lib/domain.ts.
